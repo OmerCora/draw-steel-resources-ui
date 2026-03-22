@@ -234,6 +234,22 @@ export class ResourceApp extends foundry.applications.api.HandlebarsApplicationM
     const hasPassiveEffects = passiveEffects.length > 0;
     const noClassData = !classDef || (gains.length === 0 && spends.length === 0);
 
+    // Mantle of Essence indicator (Elementalist)
+    let mantleIndicator = null;
+    if (classDef?.mantleIndicator) {
+      const mi = classDef.mantleIndicator;
+      if (heroLevel >= mi.minLevel) {
+        const stamina = actor.system.stamina?.value ?? 0;
+        const isDying = stamina <= 0;
+        const noThreshold = heroLevel >= mi.noThresholdLevel;
+        const isActive = !isDying && (noThreshold || heroicValue >= mi.essenceThreshold);
+        mantleIndicator = {
+          label: mi.abilityName,
+          isActive,
+        };
+      }
+    }
+
     return {
       noCharacter: false,
       isGM,
@@ -250,6 +266,7 @@ export class ResourceApp extends foundry.applications.api.HandlebarsApplicationM
       showPassives: this._showPassives,
       passiveEffects,
       noClassData,
+      mantleIndicator,
       className: classDef?.className ?? classItem?.name ?? "",
     };
   }
@@ -558,8 +575,18 @@ export class ResourceApp extends foundry.applications.api.HandlebarsApplicationM
     // Build chat content with optional detail (e.g. Healing Grace enhancement list)
     let detailHtml = "";
     if (entry.spendXDetail) {
+      let detailText = entry.spendXDetail;
+      // Substitute Practical Magic placeholders with computed values
+      if (entry.id === "spend-practical-magic") {
+        const reason = actor.system.characteristics?.reason?.value ?? 0;
+        const total = reason + spendAmount;
+        detailText = detailText
+          .replace("{totalSquares}", total)
+          .replace("{reason}", reason)
+          .replace("{essenceSpent}", spendAmount);
+      }
       const enrichOpts = { rollData: actor.getRollData(), async: true };
-      detailHtml = await TextEditor.enrichHTML(entry.spendXDetail, enrichOpts);
+      detailHtml = await TextEditor.enrichHTML(detailText, enrichOpts);
     }
 
     const speaker = ChatMessage.getSpeaker({ actor });

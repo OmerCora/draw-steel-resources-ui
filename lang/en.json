@@ -51,6 +51,10 @@
       "Pray": "Pray",
       "PrayMethod": "Prayed before rolling for piety"
     },
+    "Mantle": {
+      "Active": "Active",
+      "Inactive": "Inactive"
+    },
     "Notify": {
       "NoResource": "No resource to spend.",
       "NotEnough": "Not enough resource.",

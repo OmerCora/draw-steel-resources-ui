@@ -140,7 +140,7 @@
   position: sticky;
   top: 0;
   z-index: 1;
-  background: var(--color-bg-option, var(--color-base));
+  background: var(--ds-color-header-bg, var(--color-bg-option, #23252e));
   padding-bottom: 0;
 }
 
@@ -187,6 +187,31 @@
   letter-spacing: 0.05em;
   color: var(--color-text-secondary, #aaa);
   margin-bottom: 0;
+}
+
+/* ── Mantle indicator (Elementalist) ───────────────── */
+
+.dsresources-mantle-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 12px;
+  padding: 4px 0;
+}
+
+.dsresources-mantle-label {
+  font-weight: 600;
+}
+
+.dsresources-mantle-active {
+  color: #4ade80;
+  font-weight: 700;
+}
+
+.dsresources-mantle-inactive {
+  color: var(--color-text-secondary, #888);
+  font-style: italic;
 }
 
 /* ── Section titles ────────────────────────────────────── */
@@ -270,7 +295,11 @@
 .dsresources-divider {
   border: none;
   border-top: 1px solid var(--color-border-light-2);
-  margin: 8px 0;
+  margin: 8px 0 0;
+}
+
+.dsresources-sticky-header > .dsresources-divider:first-child {
+  margin: 0;
 }
 
 /* ── Passive effects ───────────────────────────────────── */

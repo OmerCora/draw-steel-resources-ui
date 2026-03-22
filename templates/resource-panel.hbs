@@ -54,6 +54,7 @@
 
       {{!-- Current value display (sticky) --}}
       <div class="dsresources-sticky-header">
+        <hr class="dsresources-divider" />
         <div class="dsresources-value-display">
           <button type="button" class="dsresources-adj-btn" data-action="decrementHeroic"
             title="{{localize 'DSRESOURCES.Tooltip.Decrease'}}">
@@ -66,6 +67,16 @@
           </button>
         </div>
         <div class="dsresources-value-label">{{resourceName}}</div>
+        {{#if mantleIndicator}}
+        <div class="dsresources-mantle-indicator">
+          <span class="dsresources-mantle-label">{{mantleIndicator.label}}:</span>
+          {{#if mantleIndicator.isActive}}
+          <span class="dsresources-mantle-status dsresources-mantle-active">{{localize "DSRESOURCES.Mantle.Active"}}</span>
+          {{else}}
+          <span class="dsresources-mantle-status dsresources-mantle-inactive">{{localize "DSRESOURCES.Mantle.Inactive"}}</span>
+          {{/if}}
+        </div>
+        {{/if}}
         <hr class="dsresources-divider" />
       </div>
 
@@ -177,6 +188,7 @@
     <div class="dsresources-tab-pane" data-tab="surge">
 
       <div class="dsresources-sticky-header">
+        <hr class="dsresources-divider" />
         <div class="dsresources-value-display">
           <button type="button" class="dsresources-adj-btn" data-action="decrementSurge"
             title="{{localize 'DSRESOURCES.Tooltip.Decrease'}}">

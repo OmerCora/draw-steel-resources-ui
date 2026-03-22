@@ -274,7 +274,114 @@ const CONDUIT = {
 
   passiveEffects: [],
 };
-const ELEMENTALIST = { id: "elementalist", className: "Elementalist", resourceName: "Essence",    gains: [], spends: [], passiveEffects: [] };
+const ELEMENTALIST = {
+  id: "elementalist",
+  className: "Elementalist",
+  resourceName: "Essence",
+
+  gains: [
+    {
+      id: "combat-start",
+      description: "At the start of a combat encounter, gain essence equal to your Victories.",
+      amount: "victories",
+      minLevel: 1,
+    },
+    {
+      id: "turn-start",
+      description: "At the start of each of your turns during combat, you gain 2 essence.",
+      amount: 2,
+      minLevel: 1,
+    },
+    {
+      id: "turn-start-lv7",
+      description: "At the start of each of your turns during combat, you gain 3 essence. (Surging Essence)",
+      amount: 3,
+      minLevel: 7,
+      replaces: "turn-start",
+    },
+    {
+      id: "turn-start-lv10",
+      description: "At the start of each of your turns during combat, you gain 4 essence. (Essential Being)",
+      amount: 4,
+      minLevel: 10,
+      replaces: "turn-start-lv7",
+    },
+    {
+      id: "damage-trigger",
+      description: "The first time each combat round that you or a creature within 10 squares takes damage that isn't untyped or holy damage, you gain 1 essence.",
+      amount: 1,
+      minLevel: 1,
+    },
+    {
+      id: "damage-trigger-lv4",
+      description: "The first time each combat round that you or a creature within 10 squares takes damage that isn't untyped or holy damage, you gain 2 essence. (Font of Essence)",
+      amount: 2,
+      minLevel: 4,
+      replaces: "damage-trigger",
+    },
+  ],
+
+  spends: [
+    {
+      id: "spend-practical-magic",
+      description: "<strong>Practical Magic</strong> (maneuver): You teleport up to a number of squares equal to your Reason score. If you choose this option, you can spend essence to teleport 1 additional square for each essence spent.",
+      spendXDetail: "You teleport up to {totalSquares} squares (Reason {reason} + {essenceSpent} essence spent).",
+      cost: 1,
+      minLevel: 1,
+      action: "spendX",
+      spendXTitle: "Practical Magic",
+    },
+    {
+      id: "spend-explosive-assistance",
+      description: "Triggered Action — <strong>Explosive Assistance</strong> (Fire): The forced movement bonus becomes twice your Reason score instead of equal to it.",
+      cost: 1,
+      minLevel: 1,
+      requiresAbility: "Explosive Assistance",
+    },
+    {
+      id: "spend-skin-like-castle-walls",
+      description: "Triggered Action — <strong>Skin Like Castle Walls</strong> (Earth): If the triggering damage has potency effects, the potency is reduced by 1 for the target.",
+      cost: 1,
+      minLevel: 1,
+      requiresAbility: "Skin Like Castle Walls",
+    },
+    {
+      id: "spend-breath-of-dawn",
+      description: "Triggered Action — <strong>Breath of Dawn Remembered</strong> (Green): The target can spend one additional Recovery per essence spent.",
+      spendXDetail: "Breath of Dawn Remembered — The target spends X additional Recoveries.",
+      cost: 1,
+      minLevel: 1,
+      requiresAbility: "Breath of Dawn Remembered",
+      action: "spendX",
+      spendXTitle: "Breath of Dawn",
+    },
+    {
+      id: "spend-subtle-relocation",
+      description: "Triggered Action — <strong>Subtle Relocation</strong> (Void): Teleport the target up to twice your Reason score instead.",
+      cost: 1,
+      minLevel: 1,
+      requiresAbility: "Subtle Relocation",
+    },
+    {
+      id: "spend-breath-conversion",
+      description: "<strong>Breath Conversion</strong> (no action required): Spend Breath — each 1 Breath becomes [[/gain 3 heroic]].",
+      cost: 1,
+      minLevel: 10,
+      action: "spendX",
+      spendXTitle: "Breath → Essence",
+    },
+  ],
+
+  // Mantle of Essence indicator config
+  mantleIndicator: {
+    abilityName: "Mantle of Essence",
+    minLevel: 4,
+    essenceThreshold: 3,
+    noThresholdLevel: 7, // at lv7+, no essence requirement (Mantle of Quintessence)
+  },
+
+  passiveEffects: [],
+};
 const FURY      = { id: "fury",         className: "Fury",         resourceName: "Ferocity",   gains: [], spends: [], passiveEffects: [] };
 const NULL      = { id: "null",         className: "Null",         resourceName: "Discipline",  gains: [], spends: [], passiveEffects: [] };
 const SHADOW    = { id: "shadow",       className: "Shadow",       resourceName: "Insight",     gains: [], spends: [], passiveEffects: [] };
