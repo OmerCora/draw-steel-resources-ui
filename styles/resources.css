@@ -406,5 +406,32 @@
 /* ── Sidebar toggle button ─────────────────────────────── */
 
 #dsresources-sidebar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 10px;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 4px;
+  border: 1px solid var(--color-border-light-2);
+  background: var(--color-bg-option);
+  color: var(--color-text-primary, #eee);
   cursor: pointer;
+  transition: background 0.12s;
+}
+
+#dsresources-sidebar-btn:hover {
+  background: var(--color-bg-btn, #3d6b9e);
+  color: #fff;
+}
+
+/* ── Button group (surge spend multi-buttons) ──────────── */
+
+.dsresources-entry-btn-group {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
 }

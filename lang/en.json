@@ -32,9 +32,14 @@
       "SurgeReset": "Surges reset."
     },
     "Surge": {
-      "About": "Surges",
-      "Description": "Surges are a shared party resource. Heroes gain surges through various abilities and events. Spending surges can enhance abilities, add extra damage, or trigger special effects."
+      "About": "About Surges",
+      "Description": "Surges are a shared party resource. Heroes gain surges through various abilities and events. Spending surges can enhance abilities, add extra damage, or trigger special effects.",
+      "DamageDesc": "Extra Damage — deal damage equal to your highest characteristic per surge spent.",
+      "DamageMethod": "Extra Damage ({count} surge(s) — {damage} damage)",
+      "PotencyDesc": "Increase Potency — spend 2 surges to increase the potency of a power by 1 for one target.",
+      "PotencyMethod": "Increased potency by 1 for one target (2 surges)"
     },
+    "SidebarButton": "Resource Tracker",
     "HeroToken": {
       "ComingSoon": "Hero Token tracking will be available in a future version."
     },

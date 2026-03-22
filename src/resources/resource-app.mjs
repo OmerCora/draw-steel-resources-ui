@@ -46,6 +46,8 @@ export class ResourceApp extends foundry.applications.api.HandlebarsApplicationM
       spendHeroic:      ResourceApp.#spendHeroic,
       togglePassives:   ResourceApp.#togglePassives,
       resetHeroic:      ResourceApp.#resetHeroic,
+      spendSurgeDamage:  ResourceApp.#spendSurgeDamage,
+      spendSurgePotency: ResourceApp.#spendSurgePotency,
       incrementSurge:   ResourceApp.#incrementSurge,
       decrementSurge:   ResourceApp.#decrementSurge,
       resetSurge:       ResourceApp.#resetSurge,
@@ -131,6 +133,14 @@ export class ResourceApp extends foundry.applications.api.HandlebarsApplicationM
     const heroicValue = actor.system.hero?.primary?.value ?? 0;
     const surgeValue  = actor.system.hero?.surges ?? 0;
 
+    // Highest characteristic score for surge damage
+    const chars = actor.system?.characteristics ?? {};
+    let highestChar = 0;
+    for (const key of Object.keys(chars)) {
+      const val = Number(chars[key]?.value ?? 0);
+      if (val > highestChar) highestChar = val;
+    }
+
     // Resolve level-appropriate gain/spend entries
     let gains  = [];
     let spends = [];
@@ -165,6 +175,7 @@ export class ResourceApp extends foundry.applications.api.HandlebarsApplicationM
       resourceName,
       heroicValue,
       surgeValue,
+      highestChar,
       gains,
       spends,
       hasPassiveEffects,
@@ -309,6 +320,64 @@ export class ResourceApp extends foundry.applications.api.HandlebarsApplicationM
   }
 
   // ── Actions: surges ────────────────────────────────────────────────────────
+
+  /**
+   * Spend 1/2/3 surges for extra damage (highest characteristic per surge).
+   */
+  static async #spendSurgeDamage(_event, target) {
+    const actor = this.#getActiveActor();
+    if (!actor) return;
+    const count = Number(target.dataset.surgeCount) || 1;
+    const current = actor.system.hero?.surges ?? 0;
+    if (current < count) {
+      ui.notifications.warn(game.i18n.localize("DSRESOURCES.Notify.NoSurges"));
+      return;
+    }
+
+    const chars = actor.system?.characteristics ?? {};
+    let highestChar = 0;
+    for (const key of Object.keys(chars)) {
+      const val = Number(chars[key]?.value ?? 0);
+      if (val > highestChar) highestChar = val;
+    }
+
+    const totalDamage = highestChar * count;
+    const result = await updateSurges(actor, -count);
+
+    await postResourceChat(actor, {
+      resourceName: game.i18n.localize("DSRESOURCES.Tabs.Surge"),
+      action: game.i18n.localize("DSRESOURCES.Chat.Spent"),
+      amount: count,
+      method: game.i18n.format("DSRESOURCES.Surge.DamageMethod", { count: String(count), damage: String(totalDamage) }),
+      previous: result.previous,
+      current: result.current,
+      formula: `${count} × ${highestChar} = ${totalDamage}`,
+    });
+  }
+
+  /**
+   * Spend 2 surges to increase potency by 1 for one target.
+   */
+  static async #spendSurgePotency(_event, _target) {
+    const actor = this.#getActiveActor();
+    if (!actor) return;
+    const current = actor.system.hero?.surges ?? 0;
+    if (current < 2) {
+      ui.notifications.warn(game.i18n.localize("DSRESOURCES.Notify.NoSurges"));
+      return;
+    }
+
+    const result = await updateSurges(actor, -2);
+
+    await postResourceChat(actor, {
+      resourceName: game.i18n.localize("DSRESOURCES.Tabs.Surge"),
+      action: game.i18n.localize("DSRESOURCES.Chat.Spent"),
+      amount: 2,
+      method: game.i18n.localize("DSRESOURCES.Surge.PotencyMethod"),
+      previous: result.previous,
+      current: result.current,
+    });
+  }
 
   static async #incrementSurge(_event, _target) {
     const actor = this.#getActiveActor();

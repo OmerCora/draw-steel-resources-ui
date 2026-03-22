@@ -161,6 +161,37 @@
       </div>
       <div class="dsresources-value-label">{{localize "DSRESOURCES.Tabs.Surge"}}</div>
 
+      {{!-- ── Surge Spend: Extra Damage ───────────────────────────────── --}}
+      <div class="dsresources-section">
+        <h3 class="dsresources-section-title">{{localize "DSRESOURCES.Section.Spend"}}</h3>
+        <div class="dsresources-entry">
+          <span class="dsresources-entry-desc">{{localize "DSRESOURCES.Surge.DamageDesc"}}</span>
+          <div class="dsresources-entry-btn-group">
+            <button type="button" class="dsresources-entry-btn dsresources-entry-btn--spend"
+              data-action="spendSurgeDamage" data-surge-count="1">
+              -1
+            </button>
+            <button type="button" class="dsresources-entry-btn dsresources-entry-btn--spend"
+              data-action="spendSurgeDamage" data-surge-count="2">
+              -2
+            </button>
+            <button type="button" class="dsresources-entry-btn dsresources-entry-btn--spend"
+              data-action="spendSurgeDamage" data-surge-count="3">
+              -3
+            </button>
+          </div>
+        </div>
+        <div class="dsresources-entry">
+          <span class="dsresources-entry-desc">{{localize "DSRESOURCES.Surge.PotencyDesc"}}</span>
+          <button type="button" class="dsresources-entry-btn dsresources-entry-btn--spend"
+            data-action="spendSurgePotency">
+            -2
+          </button>
+        </div>
+      </div>
+
+      <hr class="dsresources-divider" />
+
       <div class="dsresources-section">
         <h3 class="dsresources-section-title">{{localize "DSRESOURCES.Surge.About"}}</h3>
         <p class="dsresources-hint">{{localize "DSRESOURCES.Surge.Description"}}</p>

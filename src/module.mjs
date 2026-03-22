@@ -35,21 +35,29 @@ Hooks.once("ready", () => {
   log("Ready");
 });
 
-// ── Sidebar button ───────────────────────────────────────────────────────────
+// ── Sidebar button (injected into chat controls) ────────────────────────────
 
-Hooks.on("getSceneControlButtons", (controls) => {
+Hooks.on("renderChatLog", (_app, html, _data) => {
   if (!_systemValid) return;
+  const root = html instanceof HTMLElement ? html : html[0];
+  if (!root) return;
+  if (root.querySelector("#dsresources-sidebar-btn")) return;
 
-  const tokenControls = controls.find((c) => c.name === "token");
-  if (!tokenControls) return;
+  const chatForm = root.querySelector("#chat-form") ?? root.querySelector(".chat-control-icon")?.parentElement;
+  const container = chatForm?.parentElement ?? root;
 
-  tokenControls.tools.push({
-    name: "dsresources-toggle",
-    title: game.i18n.localize("DSRESOURCES.WindowTitle"),
-    icon: "fa-solid fa-bolt",
-    button: true,
-    onClick: () => ResourceApp.toggle(),
-  });
+  const btn = document.createElement("button");
+  btn.id = "dsresources-sidebar-btn";
+  btn.type = "button";
+  btn.className = "dsresources-sidebar-btn";
+  btn.innerHTML = `<i class="fa-solid fa-bolt"></i> ${game.i18n.localize("DSRESOURCES.SidebarButton")}`;
+  btn.addEventListener("click", () => ResourceApp.toggle());
+
+  if (chatForm) {
+    container.insertBefore(btn, chatForm);
+  } else {
+    container.prepend(btn);
+  }
 });
 
 // ── Re-render on actor updates ───────────────────────────────────────────────
