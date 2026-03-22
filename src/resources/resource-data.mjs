@@ -122,7 +122,158 @@ const CENSOR = {
 
 // ── Stubs for remaining classes (rules TBD) ──────────────────────────────────
 
-const CONDUIT   = { id: "conduit",      className: "Conduit",      resourceName: "Piety",      gains: [], spends: [], passiveEffects: [] };
+// ── Domain Piety Conditions (Conduit) ────────────────────────────────────────
+
+export const DOMAIN_PIETY_TABLE = {
+  Creation: "A creature within 10 squares uses an area ability.",
+  Death: "A non-minion creature within 10 squares is reduced to 0 Stamina, or a solo creature within 10 squares becomes winded.",
+  Fate: "An ally within 10 squares gets a tier 3 outcome, or an enemy within 10 squares gets a tier 1 outcome on a power roll.",
+  Knowledge: "The Director spends Malice.",
+  Life: "A creature within 10 squares regains Stamina.",
+  Love: "You or any ally within 10 squares uses the Aid Attack maneuver or an ability targeting an ally.",
+  Nature: "You or a creature within 10 squares takes acid, cold, fire, lightning, poison, or sonic damage.",
+  Protection: "You or any ally within 10 squares gains temporary Stamina, or uses a triggered action to reduce incoming damage or impose a bane/double bane on an enemy's power roll.",
+  Storm: "An enemy within 10 squares is force moved.",
+  Sun: "An enemy within 10 squares takes fire or holy damage.",
+  Trickery: "You or a creature within 10 squares takes the Aid Attack or Hide maneuver.",
+  War: "You or a creature within 10 squares takes damage greater than 10 + your level in a single turn.",
+};
+
+// ── Domain Prayer Effects (Conduit — activated on pray roll of 3) ─────────────
+
+export const DOMAIN_PRAYER_EFFECTS = {
+  Creation: "Create a wall of stone within 10 squares, size 5 + @I. Lasts until end of encounter.",
+  Death: "Up to two enemies within 10 squares take [[/damage 2*@I corruption]].",
+  Fate: "Choose a creature within 10 squares. They automatically obtain a tier 1 or tier 3 outcome (your choice) on their next power roll before end of encounter.",
+  Knowledge: "Up to five allies within 10 squares (or yourself instead of one ally) each [[/gain 1 surge]].",
+  Life: "Choose yourself or one ally within 10 squares. They can spend a Recovery, end one save-ends or end-of-turn effect, or stand up if prone. Alternatively, you or one ally within 10 squares gains [[/heal 2*@I type=temporary]].",
+  Love: "Each ally within 10 squares gains [[/heal 2*@I type=temporary]].",
+  Nature: "Vines appear within 10 squares, wrapping @I creatures. Slide each up to @I squares, then the vines fade.",
+  Protection: "One ally within 10 squares gains [[/heal 4*@I type=temporary]].",
+  Storm: "Each enemy in a 3 cube within 10 squares takes [[/damage 2*@I lightning]].",
+  Sun: "One enemy within 10 squares takes [[/damage 3*@I fire]].",
+  Trickery: "Slide one creature within 10 squares up to 5+@level squares.",
+  War: "Up to three allies within 10 squares (or yourself instead of one ally) each [[/gain 2 surge]].",
+};
+
+// ── Conduit ───────────────────────────────────────────────────────────────────
+
+const CONDUIT = {
+  id: "conduit",
+  className: "Conduit",
+  resourceName: "Piety",
+
+  gains: [
+    {
+      id: "combat-start",
+      description: "At the start of a combat encounter, gain piety equal to your Victories.",
+      amount: "victories",
+      minLevel: 1,
+    },
+    {
+      id: "turn-start",
+      description: "At the start of each of your turns during combat, you gain 1d3 piety.",
+      amount: "1d3",
+      minLevel: 1,
+      action: "roll",
+    },
+    {
+      id: "turn-start-lv7",
+      description: "At the start of each of your turns during combat, you gain 1d3 + 1 piety. (Faithful's Reward)",
+      amount: "1d3 + 1",
+      minLevel: 7,
+      replaces: "turn-start",
+      action: "roll",
+    },
+    {
+      id: "pray",
+      description: "Before rolling for piety, you can pray (no action required). Roll 1d3 with additional effects based on the result.",
+      amount: "1d3",
+      minLevel: 1,
+      action: "pray",
+    },
+    {
+      id: "domain-trigger",
+      description: "Gain 2 piety from your domain's triggered piety condition.",
+      amount: 2,
+      minLevel: 1,
+      action: "domain",
+    },
+    {
+      id: "domain-trigger-lv4",
+      description: "Gain 3 piety from your domain's triggered piety condition. (Blessed Domain: +1 additional piety)",
+      amount: 3,
+      minLevel: 4,
+      replaces: "domain-trigger",
+      action: "domain",
+    },
+  ],
+
+  // Pray result tables — indexed by 1d3 result (1, 2, 3)
+  prayResults: {
+    1: {
+      label: "Roll of 1",
+      pietyBonus: 1,
+      description: "Gain 1 additional piety, but take psychic damage equal to 1d6 + your level (can't be reduced).",
+      damageEnricher: "[[/damage 1d6+@level type=psychic]]",
+    },
+    2: {
+      label: "Roll of 2",
+      pietyBonus: 1,
+      description: "Gain 1 additional piety.",
+    },
+    3: {
+      label: "Roll of 3",
+      pietyBonus: 2,
+      description: "Gain 2 additional piety and activate a domain effect of your choice.",
+      domainChoice: true,
+    },
+  },
+
+  // Level 10 pray bonus (Most Pious)
+  prayLv10Bonus: {
+    description: "When you pray, you gain 1 additional piety on top of all other effects. (Most Pious)",
+    pietyBonus: 1,
+    minLevel: 10,
+  },
+
+  spends: [
+    {
+      id: "spend-healing-grace",
+      description: "<strong>Healing Grace</strong> — The target can spend a Recovery. (maneuver, once per turn)<br><strong>Spend 1+ piety</strong> for enhancements:<ul><li>Target one additional ally within distance.</li><li>End one effect on a target that is ended by a saving throw or that ends at the end of their turn.</li><li>A prone target can stand up.</li><li>A target can spend 1 additional Recovery.</li></ul>",
+      spendXDetail: "The target can spend a Recovery. For each piety spent, choose one:<ul><li>Target one additional ally within distance.</li><li>End one effect on a target that is ended by a saving throw or that ends at the end of their turn.</li><li>A prone target can stand up.</li><li>A target can spend 1 additional Recovery.</li></ul>",
+      cost: 1,
+      minLevel: 1,
+      action: "spendX",
+      spendXTitle: "Healing Grace",
+    },
+    {
+      id: "spend-word-of-guidance",
+      description: "Triggered Action — Word of Guidance: An ally's damage-dealing ability power roll gains a double edge instead of an edge.",
+      cost: 1,
+      minLevel: 1,
+      requiresAbility: "Word of Guidance",
+    },
+    {
+      id: "spend-word-of-judgment",
+      description: "Triggered Action — Word of Judgment: An enemy's power roll that would damage an ally gains a double bane instead of a bane.",
+      cost: 1,
+      minLevel: 1,
+      requiresAbility: "Word of Judgment",
+    },
+    {
+      id: "spend-faiths-sword",
+      description: "Faith's Sword (free maneuver): Spend piety to give a chosen hero ally 1 of their Heroic Resource for every 2 piety spent.",
+      cost: 2,
+      minLevel: 9,
+      action: "spendX",
+      spendXTitle: "Faith's Sword",
+      spendXStep: 2,
+    },
+  ],
+
+  passiveEffects: [],
+};
 const ELEMENTALIST = { id: "elementalist", className: "Elementalist", resourceName: "Essence",    gains: [], spends: [], passiveEffects: [] };
 const FURY      = { id: "fury",         className: "Fury",         resourceName: "Ferocity",   gains: [], spends: [], passiveEffects: [] };
 const NULL      = { id: "null",         className: "Null",         resourceName: "Discipline",  gains: [], spends: [], passiveEffects: [] };

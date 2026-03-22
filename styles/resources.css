@@ -136,6 +136,14 @@
 
 /* ── Centered resource value ───────────────────────────── */
 
+.dsresources-sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--color-bg-option, var(--color-base));
+  padding-bottom: 0;
+}
+
 .dsresources-value-display {
   display: flex;
   align-items: center;
@@ -178,7 +186,7 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--color-text-secondary, #aaa);
-  margin-bottom: 12px;
+  margin-bottom: 0;
 }
 
 /* ── Section titles ────────────────────────────────────── */
@@ -247,6 +255,12 @@
 
 .dsresources-entry-btn--spend {
   background: #8b1a1a;
+  color: #fff;
+  border-color: transparent;
+}
+
+.dsresources-entry-btn--pray {
+  background: #5c3d8f;
   color: #fff;
   border-color: transparent;
 }
@@ -405,6 +419,21 @@
   margin-top: 4px;
 }
 
+.dsresources-chat-detail {
+  font-size: 12px;
+  margin-top: 4px;
+  padding: 4px 0;
+}
+
+.dsresources-chat-detail ul {
+  margin: 2px 0 0 16px;
+  padding: 0;
+}
+
+.dsresources-chat-detail li {
+  margin-bottom: 2px;
+}
+
 /* ── Sidebar toggle button ─────────────────────────────── */
 
 #dsresources-sidebar-btn {
@@ -436,4 +465,123 @@
   display: flex;
   gap: 4px;
   flex-shrink: 0;
+}
+
+/* ── Chat: pray result & domain ────────────────────────── */
+
+.dsresources-chat-pray-result {
+  font-size: 12px;
+  margin-bottom: 4px;
+  padding: 4px 0;
+}
+
+.dsresources-chat-pray-result > div {
+  margin-bottom: 2px;
+}
+
+.dsresources-chat-domain {
+  font-size: 12px;
+  margin-bottom: 4px;
+  color: var(--color-level-warning, #aa7a00);
+}
+
+.dsresources-chat-domain-line {
+  margin-bottom: 2px;
+  font-style: italic;
+}
+
+/* ── Spend X dialog ────────────────────────────────────── */
+
+.dsresources-spendx-form {
+  padding: 4px 0;
+}
+
+.dsresources-spendx-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.dsresources-spendx-row label {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.dsresources-spendx-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dsresources-spendx-minus,
+.dsresources-spendx-plus {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  border: 1px solid var(--color-border-light-2);
+  background: var(--color-bg-option);
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.dsresources-spendx-minus:hover,
+.dsresources-spendx-plus:hover {
+  background: var(--color-bg-btn, #3d6b9e);
+  color: #fff;
+}
+
+.dsresources-spendx-input {
+  width: 60px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 4px;
+  border: 1px solid var(--color-border-light-2);
+  border-radius: 4px;
+}
+
+.dsresources-spendx-max {
+  font-size: 11px;
+  color: var(--color-text-secondary, #888);
+}
+
+/* ── Inline Spend X controls ──────────────────────────── */
+
+.dsresources-spendx-inline {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.dsresources-spendx-adj {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: 1px solid var(--color-border-light-2);
+  background: var(--color-bg-option);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0;
+}
+
+.dsresources-spendx-adj:hover {
+  background: var(--color-bg-btn, #3d6b9e);
+  color: #fff;
+}
+
+.dsresources-spendx-value {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  font-weight: 600;
+  font-size: 14px;
 }

@@ -28,7 +28,7 @@
       "Gained": "gained",
       "Spent": "spent",
       "Reset": "reset",
-      "EncounterEnd": "Encounter ended — resource reset.",
+      "ResourceReset": "Resource reset.",
       "SurgeReset": "Surges reset."
     },
     "Surge": {
@@ -44,6 +44,13 @@
       "ComingSoon": "Hero Token tracking will be available in a future version."
     },
     "HeroicResource": "Heroic Resource",
+    "SpendX": "Spend {name}",
+    "SpendXAmount": "Amount to spend",
+    "SpendXMax": "(max {max})",
+    "Conduit": {
+      "Pray": "Pray",
+      "PrayMethod": "Prayed before rolling for piety"
+    },
     "Notify": {
       "NoResource": "No resource to spend.",
       "NotEnough": "Not enough resource.",

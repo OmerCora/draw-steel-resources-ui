@@ -7,6 +7,7 @@
  */
 
 import { MODULE_ID } from "../config.mjs";
+import { DOMAIN_PIETY_TABLE, DOMAIN_PRAYER_EFFECTS } from "./resource-data.mjs";
 import {
   getHeroActor,
   getAllHeroActors,
@@ -44,6 +45,9 @@ export class ResourceApp extends foundry.applications.api.HandlebarsApplicationM
       decrementHeroic:  ResourceApp.#decrementHeroic,
       gainHeroic:       ResourceApp.#gainHeroic,
       spendHeroic:      ResourceApp.#spendHeroic,
+      prayHeroic:       ResourceApp.#prayHeroic,
+      adjustSpendX:     ResourceApp.#adjustSpendX,
+      confirmSpendX:    ResourceApp.#confirmSpendX,
       togglePassives:   ResourceApp.#togglePassives,
       resetHeroic:      ResourceApp.#resetHeroic,
       spendSurgeDamage:  ResourceApp.#spendSurgeDamage,
@@ -83,6 +87,9 @@ export class ResourceApp extends foundry.applications.api.HandlebarsApplicationM
 
   _activeTab = "heroic";
   _showPassives = false;
+
+  /** Inline Spend X amount tracking, keyed by spend entry id. */
+  _spendXValues = {};
 
   /** GM-only: id of the currently viewed hero actor. null = auto-select first. */
   _selectedActorId = null;
@@ -151,14 +158,69 @@ export class ResourceApp extends foundry.applications.api.HandlebarsApplicationM
       const enrichedGains = resolveEntries(classDef.gains, heroLevel);
       gains = [];
       for (const e of enrichedGains) {
+        // Expand domain entries into per-domain rows based on actor's subclasses
+        if (e.action === "domain") {
+          const domains = actor.items.filter((i) => i.type === "subclass");
+          for (const domain of domains) {
+            const trigger = DOMAIN_PIETY_TABLE[domain.name];
+            if (!trigger) continue;
+            const domainDesc = await TextEditor.enrichHTML(
+              `<strong>${domain.name}:</strong> ${trigger}`, enrichOpts
+            );
+            gains.push({
+              ...e,
+              description: domainDesc,
+              label: gainLabel(e, actor),
+              isPray: false,
+            });
+          }
+          continue;
+        }
         const enrichedDesc = await TextEditor.enrichHTML(e.description, enrichOpts);
-        gains.push({ ...e, description: enrichedDesc, label: gainLabel(e, actor) });
+        gains.push({
+          ...e,
+          description: enrichedDesc,
+          label: e.action === "pray" ? game.i18n.localize("DSRESOURCES.Conduit.Pray") : gainLabel(e, actor),
+          isPray: e.action === "pray",
+        });
       }
       const enrichedSpends = resolveEntries(classDef.spends, heroLevel);
       spends = [];
       for (const e of enrichedSpends) {
+        // Filter by required ability on the actor
+        if (e.requiresAbility) {
+          const hasAbility = actor.items.some(
+            (i) => i.name === e.requiresAbility && i.type === "ability"
+          );
+          if (!hasAbility) continue;
+        }
         const enrichedDesc = await TextEditor.enrichHTML(e.description, enrichOpts);
-        spends.push({ ...e, description: enrichedDesc, label: spendLabel(e) });
+        const isSpendX = e.action === "spendX";
+
+        // Compute inline spend X state
+        let spendXValue, spendXMin, spendXMax;
+        if (isSpendX) {
+          const currentResource = actor.system.hero?.primary?.value ?? 0;
+          const step = e.spendXStep ?? 1;
+          spendXMin = e.cost ?? 1;
+          spendXMax = Math.floor(currentResource / step) * step;
+          if (spendXMax < spendXMin) spendXMax = spendXMin;
+          const raw = this._spendXValues[e.id] ?? spendXMin;
+          spendXValue = Math.max(spendXMin, Math.min(spendXMax, raw));
+          this._spendXValues[e.id] = spendXValue;
+        }
+
+        spends.push({
+          ...e,
+          description: enrichedDesc,
+          label: isSpendX
+            ? game.i18n.format("DSRESOURCES.SpendX", { name: e.spendXTitle })
+            : spendLabel(e),
+          isSpendX,
+          spendXValue,
+          spendXMin,
+          spendXMax,
+        });
       }
       const rawPassives = (classDef.passiveEffects ?? [])
         .filter((pe) => pe.minLevel <= heroLevel);
@@ -246,19 +308,58 @@ export class ResourceApp extends foundry.applications.api.HandlebarsApplicationM
     const entry = entries.find((e) => e.id === gainId);
     if (!entry) return;
 
-    const { total, formula } = await resolveGainAmount(entry, actor);
+    const { total, roll, formula } = await resolveGainAmount(entry, actor);
     const resourceName = getClassItem(actor)?.system?.primary ?? "Resource";
     const result = await updateHeroicResource(actor, total);
 
-    await postResourceChat(actor, {
-      resourceName,
-      action: game.i18n.localize("DSRESOURCES.Chat.Gained"),
-      amount: total,
-      method: entry.description,
-      previous: result.previous,
-      current: result.current,
-      formula,
-    });
+    // For dice rolls, show the roll visual in chat
+    if (roll) {
+      const rollHtml = await roll.render();
+      const speaker = ChatMessage.getSpeaker({ actor });
+      const content = `
+        <div class="dsresources-chat-card">
+          <div class="dsresources-chat-header">
+            <strong>${speaker.alias}</strong> ${game.i18n.localize("DSRESOURCES.Chat.Gained")} <strong>${total}</strong> ${resourceName}
+          </div>
+          <div class="dsresources-chat-method">${entry.description}</div>
+          <div class="dsresources-chat-roll">${rollHtml}</div>
+          <div class="dsresources-chat-summary">
+            ${resourceName}: ${result.previous} → ${result.current}
+          </div>
+        </div>`;
+      await ChatMessage.create({ user: game.user.id, speaker, content });
+    } else if (entry.action === "domain") {
+      // Domain gain — append the domain condition trigger text
+      const domains = actor.items.filter((i) => i.type === "subclass");
+      const domainLines = domains
+        .map((d) => DOMAIN_PIETY_TABLE[d.name])
+        .filter(Boolean)
+        .map((t) => `<div class="dsresources-chat-domain-line">${t}</div>`)
+        .join("");
+      const speaker = ChatMessage.getSpeaker({ actor });
+      const content = `
+        <div class="dsresources-chat-card">
+          <div class="dsresources-chat-header">
+            <strong>${speaker.alias}</strong> ${game.i18n.localize("DSRESOURCES.Chat.Gained")} <strong>${total}</strong> ${resourceName}
+          </div>
+          <div class="dsresources-chat-method">${entry.description}</div>
+          ${domainLines ? `<div class="dsresources-chat-domain">${domainLines}</div>` : ""}
+          <div class="dsresources-chat-summary">
+            ${resourceName}: ${result.previous} → ${result.current}
+          </div>
+        </div>`;
+      await ChatMessage.create({ user: game.user.id, speaker, content });
+    } else {
+      await postResourceChat(actor, {
+        resourceName,
+        action: game.i18n.localize("DSRESOURCES.Chat.Gained"),
+        amount: total,
+        method: entry.description,
+        previous: result.previous,
+        current: result.current,
+        formula,
+      });
+    }
   }
 
   static async #spendHeroic(_event, target) {
@@ -309,6 +410,174 @@ export class ResourceApp extends foundry.applications.api.HandlebarsApplicationM
     this.render(false);
   }
 
+  // ── Actions: Pray (Conduit special) ────────────────────────────────────────
+
+  /**
+   * Conduit "Pray" action — rolls 1d3 for the pray bonus effect only.
+   * The base turn-start piety roll is handled separately by gainHeroic.
+   */
+  static async #prayHeroic(_event, _target) {
+    const actor = this.#getActiveActor();
+    if (!actor) return;
+
+    const classDef = getClassDefinition(actor);
+    if (!classDef?.prayResults) return;
+
+    const heroLevel = getHeroLevel(actor);
+    const resourceName = getClassItem(actor)?.system?.primary ?? "Piety";
+
+    // Roll 1d3 for the pray effect (always 1d3, not affected by level)
+    const prayRoll = new Roll("1d3");
+    await prayRoll.evaluate();
+    const d3Result = prayRoll.total;
+    const prayData = classDef.prayResults[d3Result] ?? classDef.prayResults[1];
+
+    // Calculate pray bonus piety only
+    let totalPiety = prayData.pietyBonus ?? 0;
+    let lv10Bonus = 0;
+    if (classDef.prayLv10Bonus && heroLevel >= classDef.prayLv10Bonus.minLevel) {
+      lv10Bonus = classDef.prayLv10Bonus.pietyBonus;
+      totalPiety += lv10Bonus;
+    }
+
+    // Apply the bonus piety
+    const result = await updateHeroicResource(actor, totalPiety);
+
+    // Build enriched chat content
+    const enrichOpts = { rollData: actor.getRollData(), async: true };
+    const rollHtml = await prayRoll.render();
+
+    const bonusLines = [];
+    bonusLines.push(`<strong>${prayData.label}:</strong> ${prayData.description}`);
+    if (lv10Bonus > 0) {
+      bonusLines.push(`<strong>Most Pious:</strong> +${lv10Bonus} additional piety.`);
+    }
+
+    let damageHtml = "";
+    if (prayData.damageEnricher) {
+      const enrichedDmg = await TextEditor.enrichHTML(prayData.damageEnricher, enrichOpts);
+      damageHtml = `<div class="dsresources-chat-damage">${enrichedDmg}</div>`;
+    }
+
+    let domainHtml = "";
+    if (prayData.domainChoice) {
+      const domains = actor.items.filter((i) => i.type === "subclass");
+      const prayerParts = [];
+      for (const d of domains) {
+        const effect = DOMAIN_PRAYER_EFFECTS[d.name];
+        if (!effect) continue;
+        const enrichedEffect = await TextEditor.enrichHTML(effect, enrichOpts);
+        prayerParts.push(`<div><strong>${d.name}:</strong> ${enrichedEffect}</div>`);
+      }
+      const prayerLines = prayerParts.join("");
+      domainHtml = `<div class="dsresources-chat-domain">
+        <em>Activate a domain effect of your choice:</em>
+        ${prayerLines}
+      </div>`;
+    }
+
+    const speaker = ChatMessage.getSpeaker({ actor });
+    const content = `
+      <div class="dsresources-chat-card">
+        <div class="dsresources-chat-header">
+          <strong>${speaker.alias}</strong> prayed and gained <strong>${totalPiety}</strong> ${resourceName}
+        </div>
+        <div class="dsresources-chat-method">${game.i18n.localize("DSRESOURCES.Conduit.PrayMethod")}</div>
+        <div class="dsresources-chat-roll">${rollHtml}</div>
+        <div class="dsresources-chat-pray-result">
+          ${bonusLines.map((l) => `<div>${l}</div>`).join("")}
+        </div>
+        ${damageHtml}
+        ${domainHtml}
+        <div class="dsresources-chat-summary">
+          ${resourceName}: ${result.previous} → ${result.current}
+        </div>
+      </div>`;
+
+    await ChatMessage.create({ user: game.user.id, speaker, content });
+  }
+
+  // ── Actions: Inline Spend X controls ─────────────────────────────────────
+
+  /** Adjust the inline spend X amount (called by +/- buttons). */
+  static #adjustSpendX(_event, target) {
+    const spendId = target.dataset.spendId;
+    const direction = Number(target.dataset.direction) || 0;
+    if (!spendId) return;
+
+    const actor = this.#getActiveActor();
+    if (!actor) return;
+
+    const classDef = getClassDefinition(actor);
+    if (!classDef) return;
+
+    const heroLevel = getHeroLevel(actor);
+    const entries = resolveEntries(classDef.spends, heroLevel);
+    const entry = entries.find((e) => e.id === spendId);
+    if (!entry) return;
+
+    const currentResource = actor.system.hero?.primary?.value ?? 0;
+    const step = entry.spendXStep ?? 1;
+    const minSpend = entry.cost ?? 1;
+    const maxSpend = Math.max(minSpend, Math.floor(currentResource / step) * step);
+
+    const current = this._spendXValues[spendId] ?? minSpend;
+    this._spendXValues[spendId] = Math.max(minSpend, Math.min(maxSpend, current + direction * step));
+    this.render(false);
+  }
+
+  /** Execute the inline spend X (called by the Spend button). */
+  static async #confirmSpendX(_event, target) {
+    const actor = this.#getActiveActor();
+    if (!actor) return;
+
+    const spendId = target.dataset.spendId;
+    const classDef = getClassDefinition(actor);
+    if (!classDef) return;
+
+    const heroLevel = getHeroLevel(actor);
+    const entries = resolveEntries(classDef.spends, heroLevel);
+    const entry = entries.find((e) => e.id === spendId);
+    if (!entry) return;
+
+    const spendAmount = this._spendXValues[spendId] ?? entry.cost ?? 1;
+    const currentResource = actor.system.hero?.primary?.value ?? 0;
+
+    if (currentResource < spendAmount) {
+      ui.notifications.warn(game.i18n.localize("DSRESOURCES.Notify.NotEnough"));
+      return;
+    }
+
+    const resourceName = getClassItem(actor)?.system?.primary ?? "Resource";
+    const title = entry.spendXTitle ?? game.i18n.localize("DSRESOURCES.Section.Spend");
+    const result = await updateHeroicResource(actor, -spendAmount);
+
+    // Reset the inline value after spending
+    delete this._spendXValues[spendId];
+
+    // Build chat content with optional detail (e.g. Healing Grace enhancement list)
+    let detailHtml = "";
+    if (entry.spendXDetail) {
+      const enrichOpts = { rollData: actor.getRollData(), async: true };
+      detailHtml = await TextEditor.enrichHTML(entry.spendXDetail, enrichOpts);
+    }
+
+    const speaker = ChatMessage.getSpeaker({ actor });
+    const content = `
+      <div class="dsresources-chat-card">
+        <div class="dsresources-chat-header">
+          <strong>${speaker.alias}</strong> ${game.i18n.localize("DSRESOURCES.Chat.Spent")} <strong>${spendAmount}</strong> ${resourceName}
+        </div>
+        <div class="dsresources-chat-method">${title} (${spendAmount} ${resourceName})</div>
+        ${detailHtml ? `<div class="dsresources-chat-detail">${detailHtml}</div>` : ""}
+        <div class="dsresources-chat-summary">
+          ${resourceName}: ${result.previous} → ${result.current}
+        </div>
+      </div>`;
+
+    await ChatMessage.create({ user: game.user.id, speaker, content });
+  }
+
   static async #resetHeroic(_event, _target) {
     const actor = this.#getActiveActor();
     if (!actor) return;
@@ -319,7 +588,7 @@ export class ResourceApp extends foundry.applications.api.HandlebarsApplicationM
       resourceName,
       action: game.i18n.localize("DSRESOURCES.Chat.Reset"),
       amount: result.previous,
-      method: game.i18n.localize("DSRESOURCES.Chat.EncounterEnd"),
+      method: game.i18n.localize("DSRESOURCES.Chat.ResourceReset"),
       previous: result.previous,
       current: 0,
     });

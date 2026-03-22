@@ -52,35 +52,44 @@
     {{#if (eq activeTab "heroic")}}
     <div class="dsresources-tab-pane" data-tab="heroic">
 
-      {{!-- Current value display --}}
-      <div class="dsresources-value-display">
-        <button type="button" class="dsresources-adj-btn" data-action="decrementHeroic"
-          title="{{localize 'DSRESOURCES.Tooltip.Decrease'}}">
-          <i class="fa-solid fa-minus"></i>
-        </button>
-        <span class="dsresources-value">{{heroicValue}}</span>
-        <button type="button" class="dsresources-adj-btn" data-action="incrementHeroic"
-          title="{{localize 'DSRESOURCES.Tooltip.Increase'}}">
-          <i class="fa-solid fa-plus"></i>
-        </button>
+      {{!-- Current value display (sticky) --}}
+      <div class="dsresources-sticky-header">
+        <div class="dsresources-value-display">
+          <button type="button" class="dsresources-adj-btn" data-action="decrementHeroic"
+            title="{{localize 'DSRESOURCES.Tooltip.Decrease'}}">
+            <i class="fa-solid fa-minus"></i>
+          </button>
+          <span class="dsresources-value">{{heroicValue}}</span>
+          <button type="button" class="dsresources-adj-btn" data-action="incrementHeroic"
+            title="{{localize 'DSRESOURCES.Tooltip.Increase'}}">
+            <i class="fa-solid fa-plus"></i>
+          </button>
+        </div>
+        <div class="dsresources-value-label">{{resourceName}}</div>
+        <hr class="dsresources-divider" />
       </div>
-      <div class="dsresources-value-label">{{resourceName}}</div>
 
       {{#if noClassData}}
       <p class="dsresources-empty">{{localize "DSRESOURCES.NoClassData"}}</p>
       {{else}}
 
       {{!-- ── Gain section ────────────────────────────────────────────── --}}
-      <hr class="dsresources-divider" />
       <div class="dsresources-section">
         <h3 class="dsresources-section-title">{{localize "DSRESOURCES.Section.Gain"}}</h3>
         {{#each gains}}
         <div class="dsresources-entry">
           <span class="dsresources-entry-desc">{{{this.description}}}</span>
+          {{#if this.isPray}}
+          <button type="button" class="dsresources-entry-btn dsresources-entry-btn--pray"
+            data-action="prayHeroic" data-gain-id="{{this.id}}">
+            {{this.label}}
+          </button>
+          {{else}}
           <button type="button" class="dsresources-entry-btn dsresources-entry-btn--gain"
             data-action="gainHeroic" data-gain-id="{{this.id}}">
             {{this.label}}
           </button>
+          {{/if}}
         </div>
         {{/each}}
       </div>
@@ -93,10 +102,28 @@
         {{#each spends}}
         <div class="dsresources-entry">
           <span class="dsresources-entry-desc">{{{this.description}}}</span>
+          {{#if this.isSpendX}}
+          <div class="dsresources-spendx-inline">
+            <button type="button" class="dsresources-spendx-adj"
+              data-action="adjustSpendX" data-spend-id="{{this.id}}" data-direction="-1">
+              <i class="fa-solid fa-minus"></i>
+            </button>
+            <span class="dsresources-spendx-value">{{this.spendXValue}}</span>
+            <button type="button" class="dsresources-spendx-adj"
+              data-action="adjustSpendX" data-spend-id="{{this.id}}" data-direction="1">
+              <i class="fa-solid fa-plus"></i>
+            </button>
+            <button type="button" class="dsresources-entry-btn dsresources-entry-btn--spend"
+              data-action="confirmSpendX" data-spend-id="{{this.id}}">
+              {{this.label}}
+            </button>
+          </div>
+          {{else}}
           <button type="button" class="dsresources-entry-btn dsresources-entry-btn--spend"
             data-action="spendHeroic" data-spend-id="{{this.id}}">
             {{this.label}}
           </button>
+          {{/if}}
         </div>
         {{/each}}
       </div>
@@ -149,18 +176,21 @@
     {{#if (eq activeTab "surge")}}
     <div class="dsresources-tab-pane" data-tab="surge">
 
-      <div class="dsresources-value-display">
-        <button type="button" class="dsresources-adj-btn" data-action="decrementSurge"
-          title="{{localize 'DSRESOURCES.Tooltip.Decrease'}}">
-          <i class="fa-solid fa-minus"></i>
-        </button>
-        <span class="dsresources-value">{{surgeValue}}</span>
-        <button type="button" class="dsresources-adj-btn" data-action="incrementSurge"
-          title="{{localize 'DSRESOURCES.Tooltip.Increase'}}">
-          <i class="fa-solid fa-plus"></i>
-        </button>
+      <div class="dsresources-sticky-header">
+        <div class="dsresources-value-display">
+          <button type="button" class="dsresources-adj-btn" data-action="decrementSurge"
+            title="{{localize 'DSRESOURCES.Tooltip.Decrease'}}">
+            <i class="fa-solid fa-minus"></i>
+          </button>
+          <span class="dsresources-value">{{surgeValue}}</span>
+          <button type="button" class="dsresources-adj-btn" data-action="incrementSurge"
+            title="{{localize 'DSRESOURCES.Tooltip.Increase'}}">
+            <i class="fa-solid fa-plus"></i>
+          </button>
+        </div>
+        <div class="dsresources-value-label">{{localize "DSRESOURCES.Tabs.Surge"}}</div>
+        <hr class="dsresources-divider" />
       </div>
-      <div class="dsresources-value-label">{{localize "DSRESOURCES.Tabs.Surge"}}</div>
 
       {{!-- ── Surge Spend: Extra Damage ───────────────────────────────── --}}
       <div class="dsresources-section">
