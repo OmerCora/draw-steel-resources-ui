@@ -813,9 +813,12 @@ export class ResourceApp extends foundry.applications.api.HandlebarsApplicationM
     const opts = allowNeg ? { minValue: -(1 + (actor.getRollData?.()?.characteristics?.reason?.value ?? 0)) } : {};
     const result = await updateHeroicResource(actor, -spendAmount, opts);
 
-    // Handle optional surge grant per spend (e.g. Chaos Incarnate)
+    // Handle optional surge grant per spend (e.g. Coat the Blade, Time Bomb)
+    let surgesGained = 0;
     if (entry.grantsSurgePerSpend) {
-      await updateSurges(actor, spendAmount);
+      const step = entry.spendXStep ?? 1;
+      surgesGained = Math.floor(spendAmount / step);
+      if (surgesGained > 0) await updateSurges(actor, surgesGained);
     }
 
     // Reset the inline value after spending
@@ -825,8 +828,10 @@ export class ResourceApp extends foundry.applications.api.HandlebarsApplicationM
     let detailHtml = "";
     if (entry.spendXDetail) {
       let detailText = entry.spendXDetail;
-      // Generic placeholder
+      // Generic placeholders
       detailText = detailText.replace("{spendAmount}", spendAmount);
+      detailText = detailText.replace("{surgesGained}", surgesGained);
+      detailText = detailText.replace("{cubeIncrease}", Math.floor(spendAmount / (entry.spendXStep ?? 1)));
       // Substitute Practical Magic placeholders with computed values
       if (entry.id === "spend-practical-magic") {
         const reason = actor.system.characteristics?.reason?.value ?? 0;
@@ -840,6 +845,10 @@ export class ResourceApp extends foundry.applications.api.HandlebarsApplicationM
       detailHtml = await TextEditor.enrichHTML(detailText, enrichOpts);
     }
 
+    const surgeNote = surgesGained > 0
+      ? `<div class="dsresources-chat-detail"><em>Gained ${surgesGained} surge${surgesGained > 1 ? "s" : ""}.</em></div>`
+      : "";
+
     const speaker = ChatMessage.getSpeaker({ actor });
     const content = `
       <div class="dsresources-chat-card">
@@ -848,6 +857,7 @@ export class ResourceApp extends foundry.applications.api.HandlebarsApplicationM
         </div>
         <div class="dsresources-chat-method">${title} (${spendAmount} ${resourceName})</div>
         ${detailHtml ? `<div class="dsresources-chat-detail">${detailHtml}</div>` : ""}
+        ${surgeNote}
         <div class="dsresources-chat-summary">
           ${resourceName}: ${result.previous} → ${result.current}
         </div>

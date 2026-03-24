@@ -739,7 +739,139 @@ const NULL = {
 
   passiveEffects: [],
 };
-const SHADOW    = { id: "shadow",       className: "Shadow",       resourceName: "Insight",     gains: [], spends: [], passiveEffects: [] };
+const SHADOW = {
+  id: "shadow",
+  className: "Shadow",
+  resourceName: "Insight",
+
+  gains: [
+    {
+      id: "combat-start",
+      description: "At the start of a combat encounter, you gain insight equal to your Victories.",
+      amount: "victories",
+      minLevel: 1,
+    },
+    {
+      id: "turn-start",
+      description: "At the start of each of your turns during combat, you gain 1d3 insight.",
+      amount: "1d3",
+      minLevel: 1,
+      action: "roll",
+    },
+    {
+      id: "turn-start-lv7",
+      description: "At the start of each of your turns during combat, you gain 1d3 + 1 insight. (Keen Insight)",
+      amount: "1d3 + 1",
+      minLevel: 7,
+      replaces: "turn-start",
+      action: "roll",
+    },
+    {
+      id: "surge-damage-trigger",
+      description: "The first time each combat round that you deal damage incorporating 1 or more surges, you gain 1 insight.",
+      amount: 1,
+      minLevel: 1,
+    },
+    {
+      id: "surge-damage-trigger-lv4",
+      description: "The first time each combat round that you deal damage incorporating 1 or more surges, you gain 2 insight. (Surge of Insight)",
+      amount: 2,
+      minLevel: 4,
+      replaces: "surge-damage-trigger",
+    },
+    {
+      id: "surge-damage-trigger-lv10",
+      description: "The first time each combat round that you deal damage incorporating 1 or more surges, you gain 3 insight. (Death Pool)",
+      amount: 3,
+      minLevel: 10,
+      replaces: "surge-damage-trigger-lv4",
+    },
+    // Edge Discount — gain 1 insight to account for the discount
+    {
+      id: "edge-discount",
+      description: "<strong>Edge Discount:</strong> Whenever you use a heroic ability that makes a power roll, that ability costs 1 fewer insight if you have an edge or double edge on it. If the ability has multiple targets, the cost is reduced even if the edge applies to only one target.",
+      amount: 1,
+      minLevel: 1,
+    },
+  ],
+
+  spends: [
+    // College Features (Maneuvers)
+    {
+      id: "spend-black-ash-teleport",
+      description: "<strong>Black Ash Teleport</strong> (Black Ash — maneuver): You teleport up to 5 squares. If you have concealment or cover at your destination, you can use the Hide maneuver even if you are observed. If you successfully hide, you gain 1 surge.<br><strong>Spend 1+ Insight:</strong> You teleport 1 additional square for each insight spent.",
+      cost: 1,
+      minLevel: 1,
+      requiresSubclass: "Black Ash",
+      action: "spendX",
+      spendXTitle: "Black Ash Teleport",
+    },
+    {
+      id: "spend-coat-the-blade",
+      description: "<strong>Coat the Blade</strong> (Caustic Alchemy — maneuver): You gain 2 surges. Additionally, whenever you use a surge before the end of the encounter, you can choose to have it deal poison damage.<br><strong>Spend 1+ Insight:</strong> For each insight spent, you gain 1 additional surge.",
+      cost: 1,
+      minLevel: 1,
+      requiresSubclass: "Caustic Alchemy",
+      action: "spendX",
+      spendXTitle: "Coat the Blade",
+      grantsSurgePerSpend: true,
+      spendXDetail: "Coat the Blade — Gained {surgesGained} surge(s) (2 base + {spendAmount} from insight).",
+    },
+    {
+      id: "spend-im-no-threat",
+      description: "<strong>I'm No Threat</strong> (Harlequin Mask — maneuver): You envelop yourself in an illusion that makes you appear nonthreatening and harmless to enemies. While this illusion lasts, your strikes gain an edge, and when you take the Disengage move action, you gain a +1 bonus to the distance you can shift. The illusion ends when you harm another creature, physically interact with a creature, use this ability again, or end it voluntarily. If you end it by harming another creature, you gain 1 surge.<br><strong>Spend 1 Insight:</strong> Choose a creature within 10 squares whose size is no more than 1 greater than yours. The illusion makes you appear as that creature, covering your entire body, clothing, armor, and voice. You gain an edge on tests made to convince their allies that you are that creature.",
+      cost: 1,
+      minLevel: 1,
+      requiresSubclass: "Harlequin Mask",
+    },
+    // College Triggered Actions
+    {
+      id: "spend-clever-trick",
+      description: "<strong>Clever Trick</strong> (Harlequin Mask — triggered action)<br><em>Trigger: An enemy targets you with a strike.</em><br>Choose an enemy within distance of the triggering strike, including the one who targeted you. The strike targets that enemy instead.",
+      cost: 1,
+      minLevel: 1,
+      requiresSubclass: "Harlequin Mask",
+    },
+    {
+      id: "spend-defensive-roll",
+      description: "<strong>Defensive Roll</strong> (Caustic Alchemy — triggered action)<br><em>Trigger: Another creature damages you.</em><br>Effect: You take half the triggering damage, then can shift up to 2 squares after the triggering effect resolves. If you end this shift with concealment or cover, you can use the Hide maneuver even if you are observed.<br><strong>Spend 1 Insight:</strong> The potency of any effects associated with the triggering damage are reduced by 1 for you.",
+      cost: 1,
+      minLevel: 1,
+      requiresSubclass: "Caustic Alchemy",
+    },
+    {
+      id: "spend-in-all-this-confusion",
+      description: "<strong>In All This Confusion</strong> (Black Ash — triggered action)<br><em>Trigger: You take damage.</em><br>Effect: You take half the damage, then can teleport up to 4 squares after the triggering effect resolves.<br><strong>Spend 1+ Insight:</strong> You teleport 1 additional square for each insight spent.",
+      cost: 1,
+      minLevel: 1,
+      requiresSubclass: "Black Ash",
+      action: "spendX",
+      spendXTitle: "In All This Confusion",
+    },
+    // Class Feature — Hesitation Is Weakness
+    {
+      id: "spend-hesitation-is-weakness",
+      description: "<strong>Hesitation Is Weakness</strong> (free triggered action)<br><em>Trigger: Another hero ends their turn. That hero can't have used this ability to start their turn.</em><br>You take your turn after the triggering hero.",
+      cost: 1,
+      minLevel: 1,
+    },
+    // Level 8 — Time Bomb (Caustic Alchemy)
+    {
+      id: "spend-time-bomb",
+      description: "<strong>Time Bomb</strong> (Caustic Alchemy — free maneuver, once per round): Choose a 2 cube within 10. Each enemy in the area takes [[/damage @characteristics.agility.value]] (acid, fire, or poison — your choice). For each combat round since last used, the area increases by 1 and you gain 1 surge for this ability. After use or at end of encounter, its area and surges reset.<br><strong>Spend 2+ Insight:</strong> For every 2 insight spent, increase the cube's size by 1 and gain 1 surge that can only be used with this ability.",
+      cost: 2,
+      minLevel: 8,
+      requiresSubclass: "Caustic Alchemy",
+      action: "spendX",
+      spendXTitle: "Time Bomb",
+      spendXStep: 2,
+      grantsSurgePerSpend: true,
+      spendXDetail: "Time Bomb — Spent {spendAmount} insight. Cube size +{cubeIncrease}, gained {surgesGained} surge(s).",
+    },
+  ],
+
+  passiveEffects: [],
+};
 const TACTICIAN = {
   id: "tactician",
   className: "Tactician",
@@ -1069,7 +1201,199 @@ const TALENT = {
 
   passiveEffects: [],
 };
-const TROUBADOUR = { id: "troubadour",  className: "Troubadour",   resourceName: "Drama",       gains: [], spends: [], passiveEffects: [] };
+const TROUBADOUR = {
+  id: "troubadour",
+  className: "Troubadour",
+  resourceName: "Drama",
+
+  gains: [
+    {
+      id: "combat-start",
+      description: "At the start of a combat encounter, you gain drama equal to your Victories.",
+      amount: "victories",
+      minLevel: 1,
+    },
+    {
+      id: "turn-start",
+      description: "At the start of each of your turns during combat, you gain 1d3 drama.",
+      amount: "1d3",
+      minLevel: 1,
+      action: "roll",
+    },
+    {
+      id: "turn-start-lv7",
+      description: "At the start of each of your turns during combat, you gain 1d3 + 1 drama. (A Muse's Muse)",
+      amount: "1d3 + 1",
+      minLevel: 7,
+      replaces: "turn-start",
+      action: "roll",
+    },
+    {
+      id: "three-heroes-trigger",
+      description: "The first time three or more heroes use an ability on the same turn, you gain 2 drama.",
+      amount: 2,
+      minLevel: 1,
+    },
+    {
+      id: "winded-trigger",
+      description: "The first time any hero is made winded during the encounter, you gain 2 drama.",
+      amount: 2,
+      minLevel: 1,
+    },
+    {
+      id: "natural-19-20-trigger",
+      description: "Whenever a creature within your line of effect rolls a natural 19 or 20, you gain 3 drama.",
+      amount: 3,
+      minLevel: 1,
+    },
+    {
+      id: "hero-dies-trigger",
+      description: "When you or another hero dies, you gain 10 drama.",
+      amount: 10,
+      minLevel: 1,
+    },
+    // Death Drama — description-only special
+    {
+      id: "death-drama",
+      description: "<strong>Death Drama:</strong> When you are dead, you continue to gain drama during combat as long as your body is intact. If you have 30 drama during the encounter in which you died, you can come back to life with 1 Stamina and 0 drama (no action required).",
+      minLevel: 1,
+      isDescriptionOnly: true,
+    },
+    // Level 4 — Melodrama triggers (all enabled; user selects 2 manually)
+    {
+      id: "melodrama-natural-2",
+      description: "<strong>Melodrama:</strong> Whenever a creature rolls a natural 2 on a power roll, you gain 2 drama.",
+      amount: 2,
+      minLevel: 4,
+    },
+    {
+      id: "melodrama-villain-action",
+      description: "<strong>Melodrama:</strong> The first time the Director deals damage to a hero using a Villain action or an ability that costs Malice, you gain 2 drama.",
+      amount: 2,
+      minLevel: 4,
+    },
+    {
+      id: "melodrama-fall",
+      description: "<strong>Melodrama:</strong> The first time a hero unwillingly falls 5 or more squares, you gain 2 drama.",
+      amount: 2,
+      minLevel: 4,
+    },
+    {
+      id: "melodrama-3-surges",
+      description: "<strong>Melodrama:</strong> The first time a hero deals damage with 3 surges, you gain 2 drama.",
+      amount: 2,
+      minLevel: 4,
+    },
+    {
+      id: "melodrama-last-recovery",
+      description: "<strong>Melodrama:</strong> Whenever a hero spends their last Recovery, you gain 2 drama.",
+      amount: 2,
+      minLevel: 4,
+    },
+  ],
+
+  spends: [
+    // Class Act Features (Maneuvers)
+    {
+      id: "spend-dramatic-monologue",
+      description: "<strong>Dramatic Monologue</strong> (Auteur — maneuver): Choose one effect: give one ally an edge on their next power roll before the start of your next turn; give one ally 1 surge; or give one enemy a bane on their next power roll before the end of their next turn.<br><strong>Spend 1 Drama:</strong> You can choose two targets for the chosen effect instead of one.",
+      cost: 1,
+      minLevel: 1,
+      requiresSubclass: "Auteur",
+    },
+    {
+      id: "spend-star-power",
+      description: "<strong>Star Power</strong> (Duelist — maneuver): You gain a +2 bonus to speed until the end of your turn. Additionally, the next power roll you make this turn can't have an outcome lower than tier 2.<br><strong>Spend 1 Drama:</strong> You gain a +4 bonus to speed instead of +2.",
+      cost: 1,
+      minLevel: 1,
+      requiresSubclass: "Duelist",
+    },
+    // Class Act Triggered Actions
+    {
+      id: "spend-harmonize",
+      description: "<strong>Harmonize</strong> (Virtuoso — triggered action)<br><em>Trigger: An ally uses an ability that targets only one enemy and costs 3 or fewer of their Heroic Resource.</em><br>The target can choose one additional target for the triggering ability. Any damage dealt to the additional target is sonic damage.<br><strong>Spend 1+ Drama:</strong> You can trigger this ability when the target uses an ability with a Heroic Resource cost of 3 + each additional drama spent.",
+      cost: 3,
+      minLevel: 1,
+      requiresSubclass: "Virtuoso",
+      action: "spendX",
+      spendXTitle: "Harmonize",
+    },
+    {
+      id: "spend-riposte",
+      description: "<strong>Riposte</strong> (Duelist — triggered action)<br><em>Trigger: You or one ally within melee 1 takes damage from a melee strike.</em><br>The target makes a free strike against the creature who made the triggering strike.",
+      minLevel: 1,
+      requiresSubclass: "Duelist",
+      isDescriptionOnly: true,
+    },
+    {
+      id: "spend-turnabout",
+      description: "<strong>Turnabout Is Fair Play</strong> (Auteur — triggered action)<br><em>Trigger: A creature within ranged 10 makes an ability roll that has an edge, double edge, bane, or double bane.</em><br>An edge becomes a bane, a double edge becomes an edge, a bane becomes an edge, or a double bane becomes a bane.<br><strong>Spend 3 Drama:</strong> An edge becomes a double bane, a double edge is negated, a bane becomes a double edge, or a double bane is negated.",
+      cost: 3,
+      minLevel: 1,
+      requiresSubclass: "Auteur",
+    },
+    // Signature Abilities
+    {
+      id: "spend-artful-flourish",
+      description: "<strong>Artful Flourish</strong> (main action): You make a melee strike against two creatures or objects. You can shift up to 3 squares.<br><strong>Spend 2+ Drama:</strong> Target one additional creature or object for every 2 drama spent.",
+      cost: 2,
+      minLevel: 1,
+      requiresAbility: "Artful Flourish",
+      action: "spendX",
+      spendXTitle: "Artful Flourish",
+      spendXStep: 2,
+    },
+    {
+      id: "spend-witty-banter",
+      description: "<strong>Witty Banter</strong> (main action): You make a magic melee or ranged strike against one creature. One ally within 10 squares can end one effect on them that is ended by a saving throw or that ends at the end of their turn.<br><strong>Spend 1 Drama:</strong> The chosen ally can also spend a Recovery.",
+      cost: 1,
+      minLevel: 1,
+      requiresAbility: "Witty Banter",
+    },
+    // Level 2 — Appeal to the Muses
+    {
+      id: "spend-appeal-to-muses",
+      description: "<strong>Appeal to the Muses</strong> (lv2, no action required): Before rolling for drama at the start of your turn, you can make an appeal:<ul><li><strong>Roll 1:</strong> You gain 1 additional drama. The Director gains 1d3 Malice.</li><li><strong>Roll 2:</strong> You gain 1 Heroic Resource, which you can keep or give to an ally within the distance of your active performance. The Director gains 1 Malice.</li><li><strong>Roll 3:</strong> You gain 2 of a Heroic Resource, which you can distribute among yourself and any allies within the distance of your active performance.</li></ul>",
+      minLevel: 2,
+      isDescriptionOnly: true,
+    },
+    // Level 3 — Hypnotic Overtones
+    {
+      id: "spend-hypnotic-overtones",
+      description: "<strong>Hypnotic Overtones</strong> (main action): You make a power roll against each enemy in a 2 burst, dealing psychic damage and potentially dazing them.<br><strong>Spend 2+ Drama:</strong> The size of the burst increases by 1 for every 2 drama spent.",
+      cost: 3,
+      minLevel: 3,
+      requiresAbility: "Hypnotic Overtones",
+      action: "spendX",
+      spendXTitle: "Hypnotic Overtones",
+      spendXStep: 2,
+    },
+    // Level 6 — Spotlight (Performance)
+    {
+      id: "spend-spotlight",
+      description: "<strong>Spotlight</strong> (performance, no action): While this performance is active, each target who starts their turn in the 5 aura gains 1 of their Heroic Resource. This Heroic Resource disappears at the end of the target's turn if they don't spend it.",
+      minLevel: 6,
+      isDescriptionOnly: true,
+    },
+    // Level 8 — Deleted Scene (Auteur only)
+    {
+      id: "spend-deleted-scene",
+      description: "<strong>Deleted Scene</strong> (Auteur — free triggered action): Whenever a creature within distance of your Dramatic Monologue ability makes a power roll, you can spend 1 drama to use Dramatic Monologue, targeting only one creature.",
+      cost: 1,
+      minLevel: 8,
+      requiresSubclass: "Auteur",
+    },
+    // Level 9 — Roar of the Crowd
+    {
+      id: "spend-roar-of-the-crowd",
+      description: "<strong>Roar of the Crowd:</strong> Whenever you spend a Recovery, you can forgo regaining Stamina to invoke the roar of an invisible applauding audience. You and each ally within 3 squares gain temporary Stamina equal to 10 + the number of active bonds from your Scene Partner feature + either your Victories or the number of players in your game (whichever is higher).",
+      minLevel: 9,
+      isDescriptionOnly: true,
+    },
+  ],
+
+  passiveEffects: [],
+};
 
 // ── Registry ─────────────────────────────────────────────────────────────────
 

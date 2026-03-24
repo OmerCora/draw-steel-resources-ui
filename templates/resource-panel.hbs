@@ -150,7 +150,9 @@
         {{#each gains}}
         <div class="dsresources-entry">
           <span class="dsresources-entry-desc">{{{this.description}}}</span>
-          {{#if this.isPray}}
+          {{#if this.isDescriptionOnly}}
+          {{!-- No button for description-only gains --}}
+          {{else if this.isPray}}
           <button type="button" class="dsresources-entry-btn dsresources-entry-btn--pray"
             data-action="prayHeroic" data-gain-id="{{this.id}}">
             {{this.label}}
@@ -209,13 +211,13 @@
               data-action="adjustSpendX" data-spend-id="{{this.id}}" data-direction="1">
               <i class="fa-solid fa-plus"></i>
             </button>
-            <button type="button" class="dsresources-entry-btn dsresources-entry-btn--spend"
+            <button type="button" class="dsresources-entry-btn {{#if this.grantsSurgePerSpend}}dsresources-entry-btn--surge{{else}}dsresources-entry-btn--spend{{/if}}"
               data-action="confirmSpendX" data-spend-id="{{this.id}}">
               {{this.label}}
             </button>
           </div>
           {{else}}
-          <button type="button" class="dsresources-entry-btn dsresources-entry-btn--spend"
+          <button type="button" class="dsresources-entry-btn {{#if this.grantsSurge}}dsresources-entry-btn--surge{{else}}dsresources-entry-btn--spend{{/if}}"
             data-action="spendHeroic" data-spend-id="{{this.id}}">
             {{this.label}}
           </button>

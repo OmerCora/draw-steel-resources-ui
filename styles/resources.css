@@ -381,6 +381,12 @@
   border-color: transparent;
 }
 
+.dsresources-entry-btn--surge {
+  background: #1a5276;
+  color: #fff;
+  border-color: transparent;
+}
+
 /* ── Divider ───────────────────────────────────────────── */
 
 .dsresources-divider {
