@@ -40,14 +40,13 @@ Resources UI gives players and GMs a dedicated sidebar panel for managing all ni
 - GM controls to give and spend tokens manually
 - Only visible when the system's Hero Token model is available
 
-### GM Tools
-- Character switcher dropdown to view and manage any hero's resources
-- Automatically re-renders on actor updates for real-time tracking
-
 ### Passive Effect Tables
 - Growing Ferocity (Fury), Discipline Mastery (Null), and other threshold-based passive tables
 - Active/inactive status highlighted based on current resource value
 - Collapsible section to save panel space
+
+### For Directors only
+- Character switcher dropdown to view and manage any assigned hero's resources
 
 <img width="954" height="387" alt="Screenshot 2026-03-24 230200" src="https://github.com/user-attachments/assets/ab521cdd-7fbd-4413-a261-6d04697c596e" />
 <img width="672" height="649" alt="Screenshot 2026-03-24 230121" src="https://github.com/user-attachments/assets/a3bbd7a6-fd83-4f21-975e-ace9adb0c00f" />
