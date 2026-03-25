@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Draw Steel Resource Tracker — Styles
+   Draw Steel Resource Tracker, Styles
    Namespaced with .draw-steel-resources-ui / .dsresources-*
    ========================================================================== */
 
@@ -383,6 +383,12 @@
 
 .dsresources-entry-btn--surge {
   background: #1a5276;
+  color: #fff;
+  border-color: transparent;
+}
+
+.dsresources-entry-btn--herotoken {
+  background: #c2742f;
   color: #fff;
   border-color: transparent;
 }

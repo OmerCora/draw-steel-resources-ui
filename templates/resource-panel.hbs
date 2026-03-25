@@ -85,7 +85,6 @@
           </button>
           {{/if}}
         </div>
-        <div class="dsresources-value-label">{{localize "DSRESOURCES.Tabs.HeroToken"}}</div>
       </div>
       {{/if}}
 
@@ -103,6 +102,12 @@
       data-action="switchTab" data-tab="surge">
       {{localize "DSRESOURCES.Tabs.Surge"}}
     </button>
+    {{#if heroTokenAvailable}}
+    <button type="button" class="dsresources-tab {{#if (eq activeTab 'heroToken')}}active{{/if}}"
+      data-action="switchTab" data-tab="heroToken">
+      {{localize "DSRESOURCES.Tabs.HeroToken"}}
+    </button>
+    {{/if}}
   </nav>
   <hr class="dsresources-tab-divider">
 
@@ -148,6 +153,21 @@
       <div class="dsresources-section">
         <h3 class="dsresources-section-title">{{localize "DSRESOURCES.Section.Gain"}}</h3>
         {{#each gains}}
+        {{#if this.isGroupHeader}}
+        {{!-- Group header (e.g. Melodrama), description only, no button --}}
+        <div class="dsresources-entry dsresources-entry--group-header">
+          <span class="dsresources-entry-desc">{{{this.description}}}</span>
+        </div>
+        {{#each this.children}}
+        <div class="dsresources-entry dsresources-entry--child">
+          <span class="dsresources-entry-desc">{{{this.description}}}</span>
+          <button type="button" class="dsresources-entry-btn dsresources-entry-btn--gain"
+            data-action="gainHeroic" data-gain-id="{{this.id}}">
+            {{this.label}}
+          </button>
+        </div>
+        {{/each}}
+        {{else}}
         <div class="dsresources-entry">
           <span class="dsresources-entry-desc">{{{this.description}}}</span>
           {{#if this.isDescriptionOnly}}
@@ -169,6 +189,7 @@
           </button>
           {{/if}}
         </div>
+        {{/if}}
         {{/each}}
       </div>
 
@@ -179,7 +200,7 @@
         <h3 class="dsresources-section-title">{{localize "DSRESOURCES.Section.Spend"}}</h3>
         {{#each spends}}
         {{#if this.isGroupHeader}}
-        {{!-- Group header (e.g. Psi Boost) — description only, no button --}}
+        {{!-- Group header (e.g. Psi Boost), description only, no button --}}
         <div class="dsresources-entry dsresources-entry--group-header">
           <span class="dsresources-entry-desc">{{{this.description}}}</span>
         </div>
@@ -193,7 +214,7 @@
         </div>
         {{/each}}
         {{else if this.isDescriptionOnly}}
-        {{!-- Description-only entry (e.g. Manifold Resonance) — no button --}}
+        {{!-- Description-only entry (e.g. Manifold Resonance), no button --}}
         <div class="dsresources-entry">
           <span class="dsresources-entry-desc">{{{this.description}}}</span>
         </div>
@@ -346,6 +367,57 @@
           <i class="fa-solid fa-rotate-left"></i>
           {{localize "DSRESOURCES.Action.Reset"}}
         </button>
+      </div>
+
+    </div>
+    {{/if}}
+
+    {{!-- ════════════════════════════════════════════════════════════════
+         HERO TOKEN TAB
+         ════════════════════════════════════════════════════════════════ --}}
+    {{#if (eq activeTab "heroToken")}}
+    <div class="dsresources-tab-pane" data-tab="heroToken">
+
+      <div class="dsresources-section">
+        <h3 class="dsresources-section-title">{{localize "DSRESOURCES.Section.Spend"}}</h3>
+
+        <div class="dsresources-entry">
+          <span class="dsresources-entry-desc">{{localize "DSRESOURCES.HeroToken.SurgeDesc"}}</span>
+          <button type="button" class="dsresources-entry-btn dsresources-entry-btn--herotoken"
+            data-action="spendTokenSurge">
+            <i class="fa-solid fa-coins"></i> -1
+          </button>
+        </div>
+
+        <div class="dsresources-entry">
+          <span class="dsresources-entry-desc">{{localize "DSRESOURCES.HeroToken.SaveDesc"}}</span>
+          <button type="button" class="dsresources-entry-btn dsresources-entry-btn--herotoken"
+            data-action="spendTokenSave">
+            <i class="fa-solid fa-coins"></i> -1
+          </button>
+        </div>
+
+        <div class="dsresources-entry">
+          <span class="dsresources-entry-desc">{{localize "DSRESOURCES.HeroToken.RerollDesc"}}</span>
+          <button type="button" class="dsresources-entry-btn dsresources-entry-btn--herotoken"
+            data-action="spendTokenReroll">
+            <i class="fa-solid fa-coins"></i> -1
+          </button>
+        </div>
+
+        <div class="dsresources-entry">
+          <span class="dsresources-entry-desc">{{localize "DSRESOURCES.HeroToken.RecoveryDesc" recoveryValue=recoveryValue}}</span>
+          <button type="button" class="dsresources-entry-btn dsresources-entry-btn--herotoken"
+            data-action="spendTokenRecovery">
+            <i class="fa-solid fa-coins"></i> -2
+          </button>
+        </div>
+      </div>
+
+      <hr class="dsresources-divider" />
+
+      <div class="dsresources-section">
+        <p class="dsresources-entry-desc" style="font-style: italic; padding: 4px;">{{localize "DSRESOURCES.HeroToken.LimitNote"}}</p>
       </div>
 
     </div>

@@ -1,5 +1,5 @@
 /**
- * Resource logic — resolving level-filtered entries, updating actor data,
+ * Resource logic, resolving level-filtered entries, updating actor data,
  * rolling dice, and posting chat messages.
  */
 

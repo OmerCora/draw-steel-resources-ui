@@ -1,5 +1,5 @@
 /**
- * Resource Tracker — ApplicationV2 panel.
+ * Resource Tracker, ApplicationV2 panel.
  *
  * Singleton window showing heroic resource, surges, and (future) hero tokens.
  * Players see their assigned character; the GM gets a character selector bar
@@ -59,6 +59,10 @@ export class ResourceApp extends foundry.applications.api.HandlebarsApplicationM
       gainGrowthSurge:  ResourceApp.#gainGrowthSurge,
       incrementToken:   ResourceApp.#incrementToken,
       decrementToken:   ResourceApp.#decrementToken,
+      spendTokenSurge:    ResourceApp.#spendTokenSurge,
+      spendTokenSave:     ResourceApp.#spendTokenSave,
+      spendTokenReroll:   ResourceApp.#spendTokenReroll,
+      spendTokenRecovery: ResourceApp.#spendTokenRecovery,
       strainDamage:     ResourceApp.#strainDamage,
       mindRecovery:     ResourceApp.#mindRecovery,
     },
@@ -119,30 +123,16 @@ export class ResourceApp extends foundry.applications.api.HandlebarsApplicationM
   }
 
   /**
-   * Attempt to read the shared hero token pool from the Draw Steel system.
+   * Read the shared hero token pool via the Draw Steel system API.
    * Returns { available: true, value: Number } or { available: false }.
    */
   #getHeroTokens() {
-    const asNum = (v) => { const n = Number(v); return Number.isFinite(n) ? n : null; };
     try {
-      // Draw Steel system exposes hero tokens via the ds namespace
-      if (typeof ds !== "undefined") {
-        // ds.game.heroTokens (CombatTracker-level shared pool)
-        const v1 = asNum(ds.game?.heroTokens);
-        if (v1 !== null) return { available: true, value: v1 };
-        const v2 = asNum(ds.heroTokens);
-        if (v2 !== null) return { available: true, value: v2 };
+      const model = game.actors?.heroTokens;
+      if (model && typeof model.value === "number") {
+        return { available: true, value: model.value };
       }
-      // Try game-level setting
-      const val = asNum(game.settings.get("draw-steel", "heroTokens"));
-      if (val !== null) return { available: true, value: val };
-    } catch { /* setting not registered — expected */ }
-    try {
-      // Some systems store it under the active combat
-      const combat = game.combat;
-      const v = asNum(combat?.system?.heroTokens);
-      if (v !== null) return { available: true, value: v };
-    } catch { /* no active combat */ }
+    } catch { /* system not ready or API unavailable */ }
     return { available: false };
   }
 
@@ -212,6 +202,22 @@ export class ResourceApp extends foundry.applications.api.HandlebarsApplicationM
           continue;
         }
         const enrichedDesc = await TextEditor.enrichHTML(e.description, enrichOpts);
+
+        // Process children for gain group headers (e.g. Melodrama)
+        let processedChildren;
+        if (e.isGroupHeader && e.children?.length) {
+          processedChildren = [];
+          for (const child of e.children) {
+            if (child.minLevel > heroLevel) continue;
+            const childDesc = await TextEditor.enrichHTML(child.description, enrichOpts);
+            processedChildren.push({
+              ...child,
+              description: childDesc,
+              label: gainLabel(child, actor),
+            });
+          }
+        }
+
         gains.push({
           ...e,
           description: enrichedDesc,
@@ -220,6 +226,7 @@ export class ResourceApp extends foundry.applications.api.HandlebarsApplicationM
             : gainLabel(e, actor),
           isPray: e.action === "pray",
           isMindRecovery: e.action === "mindRecovery",
+          children: processedChildren,
         });
       }
       const enrichedSpends = resolveEntries(classDef.spends, heroLevel);
@@ -233,8 +240,10 @@ export class ResourceApp extends foundry.applications.api.HandlebarsApplicationM
           if (!hasAbility) continue;
         }
         if (e.requiresSubclass) {
-          const hasSubclass = actor.items.some(
-            (i) => i.name === e.requiresSubclass && i.type === "subclass"
+          const target = e.requiresSubclass.toLowerCase();
+          const subclassItems = actor.itemTypes?.subclass ?? [];
+          const hasSubclass = subclassItems.some(
+            (i) => i.name?.toLowerCase() === target || i.system?._dsid?.toLowerCase() === target
           );
           if (!hasSubclass) continue;
         }
@@ -266,8 +275,10 @@ export class ResourceApp extends foundry.applications.api.HandlebarsApplicationM
           for (const child of e.children) {
             if (child.minLevel > heroLevel) continue;
             if (child.requiresSubclass) {
-              const hasSub = actor.items.some(
-                (i) => i.name === child.requiresSubclass && i.type === "subclass"
+              const childTarget = child.requiresSubclass.toLowerCase();
+              const childSubItems = actor.itemTypes?.subclass ?? [];
+              const hasSub = childSubItems.some(
+                (i) => i.name?.toLowerCase() === childTarget || i.system?._dsid?.toLowerCase() === childTarget
               );
               if (!hasSub) continue;
             }
@@ -360,7 +371,7 @@ export class ResourceApp extends foundry.applications.api.HandlebarsApplicationM
       const enrichOpts2 = { rollData: actor.getRollData(), async: true };
 
       if (cf.type === "mantle") {
-        // Mantle of Essence — threshold-based active/inactive
+        // Mantle of Essence, threshold-based active/inactive
         if (heroLevel >= cf.minLevel) {
           const stamina = actor.system.stamina?.value ?? 0;
           const isDying = stamina <= 0;
@@ -387,7 +398,7 @@ export class ResourceApp extends foundry.applications.api.HandlebarsApplicationM
           };
         }
       } else if (cf.type === "strain") {
-        // Strain — active when heroic resource < 0
+        // Strain, active when heroic resource < 0
         const isActive = heroicValue < 0;
         const description = await TextEditor.enrichHTML(cf.description, enrichOpts2);
         classFeature = {
@@ -406,6 +417,10 @@ export class ResourceApp extends foundry.applications.api.HandlebarsApplicationM
     // Hero token pool (shared party resource)
     const tokenInfo = this.#getHeroTokens();
 
+    // Recovery value for hero token stamina recovery
+    const recoveryValue = actor.system.stamina?.recoveryValue
+      ?? Math.floor((actor.system.stamina?.max ?? 0) / 3);
+
     return {
       noCharacter: false,
       isGM,
@@ -417,6 +432,7 @@ export class ResourceApp extends foundry.applications.api.HandlebarsApplicationM
       surgeValue,
       heroTokenAvailable: tokenInfo.available,
       heroTokenValue: tokenInfo.available ? tokenInfo.value : 0,
+      recoveryValue,
       highestChar,
       gains,
       spends,
@@ -493,7 +509,16 @@ export class ResourceApp extends foundry.applications.api.HandlebarsApplicationM
 
     const heroLevel = getHeroLevel(actor);
     const entries = resolveEntries(classDef.gains, heroLevel);
-    const entry = entries.find((e) => e.id === gainId);
+    let entry = entries.find((e) => e.id === gainId);
+    // Search within children of group headers (e.g. Melodrama)
+    if (!entry) {
+      for (const e of entries) {
+        if (e.children) {
+          entry = e.children.find((c) => c.id === gainId);
+          if (entry) break;
+        }
+      }
+    }
     if (!entry) return;
 
     const { total, roll, formula } = await resolveGainAmount(entry, actor);
@@ -517,7 +542,7 @@ export class ResourceApp extends foundry.applications.api.HandlebarsApplicationM
         </div>`;
       await ChatMessage.create({ user: game.user.id, speaker, content });
     } else if (entry.action === "domain") {
-      // Domain gain — append the domain condition trigger text
+      // Domain gain, append the domain condition trigger text
       const domains = actor.items.filter((i) => i.type === "subclass");
       const domainLines = domains
         .map((d) => DOMAIN_PIETY_TABLE[d.name])
@@ -568,7 +593,7 @@ export class ResourceApp extends foundry.applications.api.HandlebarsApplicationM
     const content = `
       <div class="dsresources-chat-card">
         <div class="dsresources-chat-header">
-          <strong>${speaker.alias}</strong> — ${game.i18n.localize("DSRESOURCES.Talent.MindRecovery")}
+          <strong>${speaker.alias}</strong>, ${game.i18n.localize("DSRESOURCES.Talent.MindRecovery")}
         </div>
         <div class="dsresources-chat-method">
           ${game.i18n.format("DSRESOURCES.Talent.MindRecoveryDesc", { recoveries: recoveries - 1 })}
@@ -660,7 +685,7 @@ export class ResourceApp extends foundry.applications.api.HandlebarsApplicationM
   // ── Actions: Pray (Conduit special) ────────────────────────────────────────
 
   /**
-   * Conduit "Pray" action — rolls 1d3 for the pray bonus effect only.
+   * Conduit "Pray" action, rolls 1d3 for the pray bonus effect only.
    * The base turn-start piety roll is handled separately by gainHeroic.
    */
   static async #prayHeroic(_event, _target) {
@@ -902,7 +927,7 @@ export class ResourceApp extends foundry.applications.api.HandlebarsApplicationM
     const content = `
       <div class="dsresources-chat-card">
         <div class="dsresources-chat-header">
-          <strong>${speaker.alias}</strong> — ${game.i18n.localize("DSRESOURCES.Talent.StrainDamage")}
+          <strong>${speaker.alias}</strong>, ${game.i18n.localize("DSRESOURCES.Talent.StrainDamage")}
         </div>
         <div class="dsresources-chat-method">
           ${desc}
@@ -1020,43 +1045,87 @@ export class ResourceApp extends foundry.applications.api.HandlebarsApplicationM
       resourceName: game.i18n.localize("DSRESOURCES.Tabs.Surge"),
       action: game.i18n.localize("DSRESOURCES.Chat.Gained"),
       amount: count,
-      method: `${tableLabel} — ${game.i18n.localize("DSRESOURCES.GrowthSurge")}`,
+      method: `${tableLabel}, ${game.i18n.localize("DSRESOURCES.GrowthSurge")}`,
       previous: result.previous,
       current: result.current,
     });
   }
 
-  // ── Actions: hero tokens (GM only) ────────────────────────────────────────
+  // ── Actions: hero tokens ──────────────────────────────────────────────────
+  // Uses the Draw Steel system's native HeroTokenModel API:
+  //   game.actors.heroTokens.value      , current count
+  //   .spendToken(spendType, { flavor }), spend (handles chat + sockets)
+  //   .giveToken(count)                 , GM: add tokens
+  //   .resetTokens()                    , GM: reset to party size
 
-  static async #incrementToken(_event, _target) {
-    if (!game.user.isGM) return;
-    const tokenInfo = this.#getHeroTokens();
-    if (!tokenInfo.available) return;
-    try {
-      if (typeof ds !== "undefined" && ds.heroTokens != null) {
-        ds.heroTokens = tokenInfo.value + 1;
-      } else if (game.combat?.system?.heroTokens != null) {
-        await game.combat.update({ "system.heroTokens": tokenInfo.value + 1 });
-      } else {
-        await game.settings.set("draw-steel", "heroTokens", tokenInfo.value + 1);
-      }
-    } catch { /* unable to update hero tokens */ }
+  /** Spend 1 hero token → gain 2 surges (system handles chat). */
+  static async #spendTokenSurge(_event, _target) {
+    const actor = this.#getActiveActor();
+    if (!actor) return;
+    const heroTokens = game.actors?.heroTokens;
+    if (!heroTokens) return;
+    const result = await heroTokens.spendToken("gainSurges", { flavor: actor.name });
+    if (result === false) return;
+    // System's spendToken only decrements the token; we must grant the surges.
+    await updateSurges(actor, 2);
     this.render(false);
   }
 
+  /** Spend 1 hero token → succeed on a failed saving throw (system handles chat). */
+  static async #spendTokenSave(_event, _target) {
+    const actor = this.#getActiveActor();
+    if (!actor) return;
+    const heroTokens = game.actors?.heroTokens;
+    if (!heroTokens) return;
+    const result = await heroTokens.spendToken("succeedSave", { flavor: actor.name });
+    if (result === false) return;
+    this.render(false);
+  }
+
+  /** Spend 1 hero token → reroll a test (system handles chat). */
+  static async #spendTokenReroll(_event, _target) {
+    const actor = this.#getActiveActor();
+    if (!actor) return;
+    const heroTokens = game.actors?.heroTokens;
+    if (!heroTokens) return;
+    const result = await heroTokens.spendToken("rerollTest", { flavor: actor.name });
+    if (result === false) return;
+    this.render(false);
+  }
+
+  /** Spend 2 hero tokens → regain stamina (uses system actor method). */
+  static async #spendTokenRecovery(_event, _target) {
+    const actor = this.#getActiveActor();
+    if (!actor) return;
+    // The system's HeroModel has spendStaminaHeroToken() which handles
+    // the dialog, token spend, stamina update, and chat message.
+    if (typeof actor.system.spendStaminaHeroToken === "function") {
+      await actor.system.spendStaminaHeroToken();
+    } else {
+      // Fallback: use the generic regainStamina spend type
+      const heroTokens = game.actors?.heroTokens;
+      if (!heroTokens) return;
+      const result = await heroTokens.spendToken("regainStamina", { flavor: actor.name });
+      if (result === false) return;
+    }
+    this.render(false);
+  }
+
+  /** GM: give 1 hero token. */
+  static async #incrementToken(_event, _target) {
+    if (!game.user.isGM) return;
+    const heroTokens = game.actors?.heroTokens;
+    if (!heroTokens) return;
+    await heroTokens.giveToken(1);
+    this.render(false);
+  }
+
+  /** GM: spend 1 hero token (generic). */
   static async #decrementToken(_event, _target) {
     if (!game.user.isGM) return;
-    const tokenInfo = this.#getHeroTokens();
-    if (!tokenInfo.available || tokenInfo.value <= 0) return;
-    try {
-      if (typeof ds !== "undefined" && ds.heroTokens != null) {
-        ds.heroTokens = tokenInfo.value - 1;
-      } else if (game.combat?.system?.heroTokens != null) {
-        await game.combat.update({ "system.heroTokens": tokenInfo.value - 1 });
-      } else {
-        await game.settings.set("draw-steel", "heroTokens", tokenInfo.value - 1);
-      }
-    } catch { /* unable to update hero tokens */ }
+    const heroTokens = game.actors?.heroTokens;
+    if (!heroTokens || heroTokens.value <= 0) return;
+    await heroTokens.spendToken("generic");
     this.render(false);
   }
 }

@@ -34,14 +34,18 @@
     "Surge": {
       "About": "About Surges",
       "Description": "Surges are a shared party resource. Heroes gain surges through various abilities and events. Spending surges can enhance abilities, add extra damage, or trigger special effects.",
-      "DamageDesc": "Extra Damage — deal damage equal to your highest characteristic per surge spent.",
-      "DamageMethod": "Extra Damage ({count} surge(s) — {damage} damage)",
-      "PotencyDesc": "Increase Potency — spend 2 surges to increase the potency of a power by 1 for one target.",
+      "DamageDesc": "Extra Damage, deal damage equal to your highest characteristic per surge spent.",
+      "DamageMethod": "Extra Damage ({count} surge(s), {damage} damage)",
+      "PotencyDesc": "Increase Potency, spend 2 surges to increase the potency of a power by 1 for one target.",
       "PotencyMethod": "Increased potency by 1 for one target (2 surges)"
     },
     "SidebarButton": "Resource Tracker",
     "HeroToken": {
-      "ComingSoon": "Hero Token tracking will be available in a future version."
+      "SurgeDesc": "Spend 1 hero token to gain 2 surges, increasing the damage or potency of an ability.",
+      "SaveDesc": "Spend 1 hero token when you fail a saving throw to succeed on the save instead.",
+      "RerollDesc": "Spend 1 hero token to reroll a test. You must use the new roll.",
+      "RecoveryDesc": "Spend 2 hero tokens (no action required) to regain Stamina equal to your recovery value ({recoveryValue}).",
+      "LimitNote": "You can use only one hero token benefit per turn or per test. Unused hero tokens disappear at the end of a session."
     },
     "HeroicResource": "Heroic Resource",
     "SpendX": "Spend {name}",
@@ -56,7 +60,7 @@
       "Inactive": "Inactive"
     },
     "Fury": {
-      "GrowthSurge": "Growing Ferocity — surge gained"
+      "GrowthSurge": "Growing Ferocity, surge gained"
     },
     "Talent": {
       "StrainBtn": "Strain Damage",

@@ -1,6 +1,6 @@
 /**
  * Draw Steel Resource Tracker
- * Main module entry point — registers hooks, sidebar button, and re-render triggers.
+ * Main module entry point, registers hooks, sidebar button, and re-render triggers.
  */
 
 import { MODULE_ID, SYSTEM_ID } from "./config.mjs";
@@ -60,10 +60,20 @@ Hooks.on("updateActor", (actor, _changes, _options, _userId) => {
   if (!ResourceApp._instance?.rendered) return;
 
   if (game.user.isGM) {
-    // GM sees all heroes — re-render for any hero actor update
+    // GM sees all heroes, re-render for any hero actor update
     if (actor.type === "hero") ResourceApp._instance.render(false);
   } else {
     const myActor = game.user.character;
     if (myActor?.id === actor.id) ResourceApp._instance.render(false);
+  }
+});
+
+// ── Re-render when hero tokens change (world setting) ────────────────────────
+
+Hooks.on("updateSetting", (setting) => {
+  if (!_systemValid) return;
+  if (!ResourceApp._instance?.rendered) return;
+  if (setting.key === `${SYSTEM_ID}.heroTokens`) {
+    ResourceApp._instance.render(false);
   }
 });

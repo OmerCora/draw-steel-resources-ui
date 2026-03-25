@@ -139,7 +139,7 @@ export const DOMAIN_PIETY_TABLE = {
   War: "You or a creature within 10 squares takes damage greater than 10 + your level in a single turn.",
 };
 
-// ── Domain Prayer Effects (Conduit — activated on pray roll of 3) ─────────────
+// ── Domain Prayer Effects (Conduit, activated on pray roll of 3) ─────────────
 
 export const DOMAIN_PRAYER_EFFECTS = {
   Creation: "Create a wall of stone within 10 squares, size 5 + @I. Lasts until end of encounter.",
@@ -209,7 +209,7 @@ const CONDUIT = {
     },
   ],
 
-  // Pray result tables — indexed by 1d3 result (1, 2, 3)
+  // Pray result tables, indexed by 1d3 result (1, 2, 3)
   prayResults: {
     1: {
       label: "Roll of 1",
@@ -240,7 +240,7 @@ const CONDUIT = {
   spends: [
     {
       id: "spend-healing-grace",
-      description: "<strong>Healing Grace</strong> — The target can spend a Recovery. (maneuver, once per turn)<br><strong>Spend 1+ piety</strong> for enhancements:<ul><li>Target one additional ally within distance.</li><li>End one effect on a target that is ended by a saving throw or that ends at the end of their turn.</li><li>A prone target can stand up.</li><li>A target can spend 1 additional Recovery.</li></ul>",
+      description: "<strong>Healing Grace</strong>, The target can spend a Recovery. (maneuver, once per turn)<br><strong>Spend 1+ piety</strong> for enhancements:<ul><li>Target one additional ally within distance.</li><li>End one effect on a target that is ended by a saving throw or that ends at the end of their turn.</li><li>A prone target can stand up.</li><li>A target can spend 1 additional Recovery.</li></ul>",
       spendXDetail: "The target can spend a Recovery. For each piety spent, choose one:<ul><li>Target one additional ally within distance.</li><li>End one effect on a target that is ended by a saving throw or that ends at the end of their turn.</li><li>A prone target can stand up.</li><li>A target can spend 1 additional Recovery.</li></ul>",
       cost: 1,
       minLevel: 1,
@@ -249,14 +249,14 @@ const CONDUIT = {
     },
     {
       id: "spend-word-of-guidance",
-      description: "Triggered Action — Word of Guidance: An ally's damage-dealing ability power roll gains a double edge instead of an edge.",
+      description: "Triggered Action, Word of Guidance: An ally's damage-dealing ability power roll gains a double edge instead of an edge.",
       cost: 1,
       minLevel: 1,
       requiresAbility: "Word of Guidance",
     },
     {
       id: "spend-word-of-judgment",
-      description: "Triggered Action — Word of Judgment: An enemy's power roll that would damage an ally gains a double bane instead of a bane.",
+      description: "Triggered Action, Word of Judgment: An enemy's power roll that would damage an ally gains a double bane instead of a bane.",
       cost: 1,
       minLevel: 1,
       requiresAbility: "Word of Judgment",
@@ -333,22 +333,22 @@ const ELEMENTALIST = {
     },
     {
       id: "spend-explosive-assistance",
-      description: "Triggered Action — <strong>Explosive Assistance</strong> (Fire): The forced movement bonus becomes twice your Reason score ([[2 * @characteristics.reason.value]]) instead of equal to it.",
+      description: "Triggered Action, <strong>Explosive Assistance</strong> (Fire): The forced movement bonus becomes twice your Reason score ([[2 * @characteristics.reason.value]]) instead of equal to it.",
       cost: 1,
       minLevel: 1,
       requiresAbility: "Explosive Assistance",
     },
     {
       id: "spend-skin-like-castle-walls",
-      description: "Triggered Action — <strong>Skin Like Castle Walls</strong> (Earth): If the triggering damage has potency effects, the potency is reduced by 1 for the target.",
+      description: "Triggered Action, <strong>Skin Like Castle Walls</strong> (Earth): If the triggering damage has potency effects, the potency is reduced by 1 for the target.",
       cost: 1,
       minLevel: 1,
       requiresAbility: "Skin Like Castle Walls",
     },
     {
       id: "spend-breath-of-dawn",
-      description: "Triggered Action — <strong>Breath of Dawn Remembered</strong> (Green): The target can spend one additional Recovery per essence spent.",
-      spendXDetail: "Breath of Dawn Remembered — The target spends X additional Recoveries.",
+      description: "Triggered Action, <strong>Breath of Dawn Remembered</strong> (Green): The target can spend one additional Recovery per essence spent.",
+      spendXDetail: "Breath of Dawn Remembered, The target spends X additional Recoveries.",
       cost: 1,
       minLevel: 1,
       requiresAbility: "Breath of Dawn Remembered",
@@ -357,14 +357,14 @@ const ELEMENTALIST = {
     },
     {
       id: "spend-subtle-relocation",
-      description: "Triggered Action — <strong>Subtle Relocation</strong> (Void): Teleport the target up to twice your Reason score ([[2 * @characteristics.reason.value]]) instead.",
+      description: "Triggered Action, <strong>Subtle Relocation</strong> (Void): Teleport the target up to twice your Reason score ([[2 * @characteristics.reason.value]]) instead.",
       cost: 1,
       minLevel: 1,
       requiresAbility: "Subtle Relocation",
     },
   ],
 
-  // Mantle of Essence — class feature shown above Gains
+  // Mantle of Essence, class feature shown above Gains
   classFeature: {
     type: "mantle",
     label: "Mantle of Essence",
@@ -478,11 +478,11 @@ const FURY = {
     },
   ],
 
-  // Growing Ferocity tables — aspect/kit-specific passive benefits
+  // Growing Ferocity tables, aspect/kit-specific passive benefits
   growthTables: [
     {
       id: "berserker",
-      label: "Growing Ferocity — Berserker",
+      label: "Growing Ferocity, Berserker",
       requiresSubclass: "Berserker",
       rows: [
         { threshold: 2, description: "Whenever you use the Knockback maneuver, the forced movement distance gains a bonus equal to your Might score ([[@characteristics.might.value]]).", minLevel: 1 },
@@ -495,7 +495,7 @@ const FURY = {
     },
     {
       id: "reaver",
-      label: "Growing Ferocity — Reaver",
+      label: "Growing Ferocity, Reaver",
       requiresSubclass: "Reaver",
       rows: [
         { threshold: 2, description: "Whenever you use the Knockback maneuver, the forced movement distance gains a bonus equal to your Agility score ([[@characteristics.agility.value]]).", minLevel: 1 },
@@ -508,7 +508,7 @@ const FURY = {
     },
     {
       id: "stormwight-boren",
-      label: "Growing Ferocity — Boren (Bear)",
+      label: "Growing Ferocity, Boren (Bear)",
       requiresSubclass: "Stormwight",
       requiresKit: "Boren",
       rows: [
@@ -522,7 +522,7 @@ const FURY = {
     },
     {
       id: "stormwight-corven",
-      label: "Growing Ferocity — Corven (Crow)",
+      label: "Growing Ferocity, Corven (Crow)",
       requiresSubclass: "Stormwight",
       requiresKit: "Corven",
       rows: [
@@ -536,7 +536,7 @@ const FURY = {
     },
     {
       id: "stormwight-raden",
-      label: "Growing Ferocity — Raden (Rat)",
+      label: "Growing Ferocity, Raden (Rat)",
       requiresSubclass: "Stormwight",
       requiresKit: "Raden",
       rows: [
@@ -550,7 +550,7 @@ const FURY = {
     },
     {
       id: "stormwight-vuken",
-      label: "Growing Ferocity — Vuken (Wolf)",
+      label: "Growing Ferocity, Vuken (Wolf)",
       requiresSubclass: "Stormwight",
       requiresKit: "Vuken",
       rows: [
@@ -628,7 +628,7 @@ const NULL = {
     },
     {
       id: "spend-inertial-shield",
-      description: "<strong>Inertial Shield</strong> (triggered — when you take damage): You take half the damage. Spend 1 discipline to reduce the potency of one effect associated with the damage by 1 for you.",
+      description: "<strong>Inertial Shield</strong> (triggered, when you take damage): You take half the damage. Spend 1 discipline to reduce the potency of one effect associated with the damage by 1 for you.",
       cost: 1,
       minLevel: 1,
     },
@@ -691,11 +691,11 @@ const NULL = {
     },
   ],
 
-  // Discipline Mastery tables — subclass-specific passive benefits
+  // Discipline Mastery tables, subclass-specific passive benefits
   growthTables: [
     {
       id: "chronokinetic",
-      label: "Discipline Mastery — Chronokinetic",
+      label: "Discipline Mastery, Chronokinetic",
       requiresSubclass: "Chronokinetic",
       description: "Whenever you use Inertial Shield, you can use the Disengage move action as a free triggered action.",
       rows: [
@@ -709,7 +709,7 @@ const NULL = {
     },
     {
       id: "cryokinetic",
-      label: "Discipline Mastery — Cryokinetic",
+      label: "Discipline Mastery, Cryokinetic",
       requiresSubclass: "Cryokinetic",
       description: "Whenever you use Inertial Shield, you can use the Grab maneuver as a free triggered action.",
       rows: [
@@ -723,7 +723,7 @@ const NULL = {
     },
     {
       id: "metakinetic",
-      label: "Discipline Mastery — Metakinetic",
+      label: "Discipline Mastery, Metakinetic",
       requiresSubclass: "Metakinetic",
       description: "Whenever you use Inertial Shield, you can use the Knockback maneuver as a free triggered action.",
       rows: [
@@ -786,7 +786,7 @@ const SHADOW = {
       minLevel: 10,
       replaces: "surge-damage-trigger-lv4",
     },
-    // Edge Discount — gain 1 insight to account for the discount
+    // Edge Discount, gain 1 insight to account for the discount
     {
       id: "edge-discount",
       description: "<strong>Edge Discount:</strong> Whenever you use a heroic ability that makes a power roll, that ability costs 1 fewer insight if you have an edge or double edge on it. If the ability has multiple targets, the cost is reduced even if the edge applies to only one target.",
@@ -799,7 +799,7 @@ const SHADOW = {
     // College Features (Maneuvers)
     {
       id: "spend-black-ash-teleport",
-      description: "<strong>Black Ash Teleport</strong> (Black Ash — maneuver): You teleport up to 5 squares. If you have concealment or cover at your destination, you can use the Hide maneuver even if you are observed. If you successfully hide, you gain 1 surge.<br><strong>Spend 1+ Insight:</strong> You teleport 1 additional square for each insight spent.",
+      description: "<strong>Black Ash Teleport</strong> (Black Ash, maneuver): You teleport up to 5 squares. If you have concealment or cover at your destination, you can use the Hide maneuver even if you are observed. If you successfully hide, you gain 1 surge.<br><strong>Spend 1+ Insight:</strong> You teleport 1 additional square for each insight spent.",
       cost: 1,
       minLevel: 1,
       requiresSubclass: "Black Ash",
@@ -808,18 +808,18 @@ const SHADOW = {
     },
     {
       id: "spend-coat-the-blade",
-      description: "<strong>Coat the Blade</strong> (Caustic Alchemy — maneuver): You gain 2 surges. Additionally, whenever you use a surge before the end of the encounter, you can choose to have it deal poison damage.<br><strong>Spend 1+ Insight:</strong> For each insight spent, you gain 1 additional surge.",
+      description: "<strong>Coat the Blade</strong> (Caustic Alchemy, maneuver): You gain 2 surges. Additionally, whenever you use a surge before the end of the encounter, you can choose to have it deal poison damage.<br><strong>Spend 1+ Insight:</strong> For each insight spent, you gain 1 additional surge.",
       cost: 1,
       minLevel: 1,
       requiresSubclass: "Caustic Alchemy",
       action: "spendX",
       spendXTitle: "Coat the Blade",
       grantsSurgePerSpend: true,
-      spendXDetail: "Coat the Blade — Gained {surgesGained} surge(s) (2 base + {spendAmount} from insight).",
+      spendXDetail: "Coat the Blade, Gained {surgesGained} surge(s) (2 base + {spendAmount} from insight).",
     },
     {
       id: "spend-im-no-threat",
-      description: "<strong>I'm No Threat</strong> (Harlequin Mask — maneuver): You envelop yourself in an illusion that makes you appear nonthreatening and harmless to enemies. While this illusion lasts, your strikes gain an edge, and when you take the Disengage move action, you gain a +1 bonus to the distance you can shift. The illusion ends when you harm another creature, physically interact with a creature, use this ability again, or end it voluntarily. If you end it by harming another creature, you gain 1 surge.<br><strong>Spend 1 Insight:</strong> Choose a creature within 10 squares whose size is no more than 1 greater than yours. The illusion makes you appear as that creature, covering your entire body, clothing, armor, and voice. You gain an edge on tests made to convince their allies that you are that creature.",
+      description: "<strong>I'm No Threat</strong> (Harlequin Mask, maneuver): You envelop yourself in an illusion that makes you appear nonthreatening and harmless to enemies. While this illusion lasts, your strikes gain an edge, and when you take the Disengage move action, you gain a +1 bonus to the distance you can shift. The illusion ends when you harm another creature, physically interact with a creature, use this ability again, or end it voluntarily. If you end it by harming another creature, you gain 1 surge.<br><strong>Spend 1 Insight:</strong> Choose a creature within 10 squares whose size is no more than 1 greater than yours. The illusion makes you appear as that creature, covering your entire body, clothing, armor, and voice. You gain an edge on tests made to convince their allies that you are that creature.",
       cost: 1,
       minLevel: 1,
       requiresSubclass: "Harlequin Mask",
@@ -827,38 +827,38 @@ const SHADOW = {
     // College Triggered Actions
     {
       id: "spend-clever-trick",
-      description: "<strong>Clever Trick</strong> (Harlequin Mask — triggered action)<br><em>Trigger: An enemy targets you with a strike.</em><br>Choose an enemy within distance of the triggering strike, including the one who targeted you. The strike targets that enemy instead.",
+      description: "<strong>Clever Trick</strong> (Harlequin Mask, triggered action)<br><em>Trigger: An enemy targets you with a strike.</em><br>Choose an enemy within distance of the triggering strike, including the one who targeted you. The strike targets that enemy instead.",
       cost: 1,
       minLevel: 1,
       requiresSubclass: "Harlequin Mask",
     },
     {
       id: "spend-defensive-roll",
-      description: "<strong>Defensive Roll</strong> (Caustic Alchemy — triggered action)<br><em>Trigger: Another creature damages you.</em><br>Effect: You take half the triggering damage, then can shift up to 2 squares after the triggering effect resolves. If you end this shift with concealment or cover, you can use the Hide maneuver even if you are observed.<br><strong>Spend 1 Insight:</strong> The potency of any effects associated with the triggering damage are reduced by 1 for you.",
+      description: "<strong>Defensive Roll</strong> (Caustic Alchemy, triggered action)<br><em>Trigger: Another creature damages you.</em><br>Effect: You take half the triggering damage, then can shift up to 2 squares after the triggering effect resolves. If you end this shift with concealment or cover, you can use the Hide maneuver even if you are observed.<br><strong>Spend 1 Insight:</strong> The potency of any effects associated with the triggering damage are reduced by 1 for you.",
       cost: 1,
       minLevel: 1,
       requiresSubclass: "Caustic Alchemy",
     },
     {
       id: "spend-in-all-this-confusion",
-      description: "<strong>In All This Confusion</strong> (Black Ash — triggered action)<br><em>Trigger: You take damage.</em><br>Effect: You take half the damage, then can teleport up to 4 squares after the triggering effect resolves.<br><strong>Spend 1+ Insight:</strong> You teleport 1 additional square for each insight spent.",
+      description: "<strong>In All This Confusion</strong> (Black Ash, triggered action)<br><em>Trigger: You take damage.</em><br>Effect: You take half the damage, then can teleport up to 4 squares after the triggering effect resolves.<br><strong>Spend 1+ Insight:</strong> You teleport 1 additional square for each insight spent.",
       cost: 1,
       minLevel: 1,
       requiresSubclass: "Black Ash",
       action: "spendX",
       spendXTitle: "In All This Confusion",
     },
-    // Class Feature — Hesitation Is Weakness
+    // Class Feature, Hesitation Is Weakness
     {
       id: "spend-hesitation-is-weakness",
       description: "<strong>Hesitation Is Weakness</strong> (free triggered action)<br><em>Trigger: Another hero ends their turn. That hero can't have used this ability to start their turn.</em><br>You take your turn after the triggering hero.",
       cost: 1,
       minLevel: 1,
     },
-    // Level 8 — Time Bomb (Caustic Alchemy)
+    // Level 8, Time Bomb (Caustic Alchemy)
     {
       id: "spend-time-bomb",
-      description: "<strong>Time Bomb</strong> (Caustic Alchemy — free maneuver, once per round): Choose a 2 cube within 10. Each enemy in the area takes [[/damage @characteristics.agility.value]] (acid, fire, or poison — your choice). For each combat round since last used, the area increases by 1 and you gain 1 surge for this ability. After use or at end of encounter, its area and surges reset.<br><strong>Spend 2+ Insight:</strong> For every 2 insight spent, increase the cube's size by 1 and gain 1 surge that can only be used with this ability.",
+      description: "<strong>Time Bomb</strong> (Caustic Alchemy, free maneuver, once per round): Choose a 2 cube within 10. Each enemy in the area takes [[/damage @characteristics.agility.value]] (acid, fire, or poison, your choice). For each combat round since last used, the area increases by 1 and you gain 1 surge for this ability. After use or at end of encounter, its area and surges reset.<br><strong>Spend 2+ Insight:</strong> For every 2 insight spent, increase the cube's size by 1 and gain 1 surge that can only be used with this ability.",
       cost: 2,
       minLevel: 8,
       requiresSubclass: "Caustic Alchemy",
@@ -866,7 +866,7 @@ const SHADOW = {
       spendXTitle: "Time Bomb",
       spendXStep: 2,
       grantsSurgePerSpend: true,
-      spendXDetail: "Time Bomb — Spent {spendAmount} insight. Cube size +{cubeIncrease}, gained {surgesGained} surge(s).",
+      spendXDetail: "Time Bomb, Spent {spendAmount} insight. Cube size +{cubeIncrease}, gained {surgesGained} surge(s).",
     },
   ],
 
@@ -926,17 +926,17 @@ const TACTICIAN = {
   ],
 
   spends: [
-    // Mark — base triggered action
+    // Mark, base triggered action
     {
       id: "spend-mark",
-      description: "<strong>Mark</strong> (free triggered action — when you or any ally deals rolled damage to a creature marked by you): Spend 1 focus for one benefit (one per trigger):<ul><li>The ability deals extra damage equal to twice your Reason score ([[/damage 2*@characteristics.reason.value]]).</li><li>The creature dealing the damage can spend a Recovery.</li><li>The creature dealing the damage can shift up to [[@characteristics.reason.value]] squares.</li></ul>",
+      description: "<strong>Mark</strong> (free triggered action, when you or any ally deals rolled damage to a creature marked by you): Spend 1 focus for one benefit (one per trigger):<ul><li>The ability deals extra damage equal to twice your Reason score ([[/damage 2*@characteristics.reason.value]]).</li><li>The creature dealing the damage can spend a Recovery.</li><li>The creature dealing the damage can shift up to [[@characteristics.reason.value]] squares.</li></ul>",
       cost: 1,
       minLevel: 1,
     },
     // Strike Now!
     {
       id: "spend-strike-now",
-      description: "<strong>Strike Now!</strong> — You target two allies instead of one with Strike Now!",
+      description: "<strong>Strike Now!</strong>, You target two allies instead of one with Strike Now!",
       cost: 5,
       minLevel: 1,
       requiresAbility: "Strike Now!",
@@ -963,32 +963,32 @@ const TACTICIAN = {
       minLevel: 1,
       requiresSubclass: "Vanguard",
     },
-    // Level 2 Mark Benefits — Doctrine
+    // Level 2 Mark Benefits, Doctrine
     {
       id: "spend-melee-superiority",
-      description: "<strong>Melee Superiority</strong> (Vanguard — Mark Benefit): When a creature marked by you attempts to move or shift within distance of your melee free strike, make a melee free strike against that creature.",
+      description: "<strong>Melee Superiority</strong> (Vanguard, Mark Benefit): When a creature marked by you attempts to move or shift within distance of your melee free strike, make a melee free strike against that creature.",
       cost: 2,
       minLevel: 2,
       requiresSubclass: "Vanguard",
     },
     {
       id: "spend-fog-of-war",
-      description: "<strong>Fog of War</strong> (Insurgent — Mark Benefit): Until the end of the encounter, whenever you or any ally makes a strike against a creature marked by you, force that target to make a free strike against a creature of your choice within 5 squares of them.",
+      description: "<strong>Fog of War</strong> (Insurgent, Mark Benefit): Until the end of the encounter, whenever you or any ally makes a strike against a creature marked by you, force that target to make a free strike against a creature of your choice within 5 squares of them.",
       cost: 2,
       minLevel: 2,
       requiresSubclass: "Insurgent",
     },
     {
       id: "spend-targets-of-opportunity",
-      description: "<strong>Targets of Opportunity</strong> (Mastermind — Mark Benefit): Until the end of the encounter, whenever you or any ally makes a strike against a creature marked by you, add one additional target to the strike.",
+      description: "<strong>Targets of Opportunity</strong> (Mastermind, Mark Benefit): Until the end of the encounter, whenever you or any ally makes a strike against a creature marked by you, add one additional target to the strike.",
       cost: 2,
       minLevel: 2,
       requiresSubclass: "Mastermind",
     },
-    // Level 8 Mark Benefits — Doctrine
+    // Level 8 Mark Benefits, Doctrine
     {
       id: "spend-bait-and-ambush",
-      description: "<strong>Bait and Ambush</strong> (Insurgent — Mark Benefit): When you or any ally makes a strike against a creature marked by you, the character making the strike can shift up to [[@characteristics.reason.value]] squares and use the Hide maneuver as a free maneuver once during the shift. The creature can shift before or after the strike is resolved.",
+      description: "<strong>Bait and Ambush</strong> (Insurgent, Mark Benefit): When you or any ally makes a strike against a creature marked by you, the character making the strike can shift up to [[@characteristics.reason.value]] squares and use the Hide maneuver as a free maneuver once during the shift. The creature can shift before or after the strike is resolved.",
       cost: 2,
       minLevel: 8,
       requiresSubclass: "Insurgent",
@@ -996,7 +996,7 @@ const TACTICIAN = {
     },
     {
       id: "spend-pincer-movement",
-      description: "<strong>Pincer Movement</strong> (Mastermind — Mark Benefit): When you or any ally makes a strike against a creature marked by you, the character making the strike can shift up to [[@characteristics.reason.value]] squares before the strike is resolved. If you didn't make the strike, you can also make this shift. If you did make the strike, one ally within 10 squares of you can make this shift instead.",
+      description: "<strong>Pincer Movement</strong> (Mastermind, Mark Benefit): When you or any ally makes a strike against a creature marked by you, the character making the strike can shift up to [[@characteristics.reason.value]] squares before the strike is resolved. If you didn't make the strike, you can also make this shift. If you did make the strike, one ally within 10 squares of you can make this shift instead.",
       cost: 2,
       minLevel: 8,
       requiresSubclass: "Mastermind",
@@ -1004,7 +1004,7 @@ const TACTICIAN = {
     },
     {
       id: "spend-see-your-enemies",
-      description: "<strong>See Your Enemies Driven Before You</strong> (Vanguard — Mark Benefit): When you or any ally makes a melee strike against a creature marked by you, the character making the strike pushes the target up to [[@characteristics.reason.value]] squares, then shifts up to [[@characteristics.reason.value]] squares, ending adjacent to the target.",
+      description: "<strong>See Your Enemies Driven Before You</strong> (Vanguard, Mark Benefit): When you or any ally makes a melee strike against a creature marked by you, the character making the strike pushes the target up to [[@characteristics.reason.value]] squares, then shifts up to [[@characteristics.reason.value]] squares, ending adjacent to the target.",
       cost: 2,
       minLevel: 8,
       requiresSubclass: "Vanguard",
@@ -1019,7 +1019,7 @@ const TALENT = {
   className: "Talent",
   resourceName: "Clarity",
 
-  // Strain — class feature shown above Gains
+  // Strain, class feature shown above Gains
   classFeature: {
     type: "strain",
     label: "Strained",
@@ -1079,7 +1079,7 @@ const TALENT = {
       minLevel: 10,
       replaces: "force-move-trigger-lv4",
     },
-    // Level 4 — Mind Recovery (spends a Recovery to gain 3 clarity)
+    // Level 4, Mind Recovery (spends a Recovery to gain 3 clarity)
     {
       id: "gain-mind-recovery",
       description: "<strong>Mind Recovery:</strong> Whenever you spend a Recovery to regain Stamina while strained, you can forgo the Stamina and gain 3 clarity instead.",
@@ -1101,7 +1101,7 @@ const TALENT = {
     {
       id: "spend-minor-telekinesis",
       description: "<strong>Minor Telekinesis</strong> (Telekinesis): The size of the creature or object you can target increases by 1 for every 2 clarity spent.",
-      spendXDetail: "Minor Telekinesis — Target size increased by {spendAmount} (spent {totalSpend} clarity).",
+      spendXDetail: "Minor Telekinesis, Target size increased by {spendAmount} (spent {totalSpend} clarity).",
       cost: 2,
       minLevel: 1,
       requiresAbility: "Minor Telekinesis",
@@ -1111,7 +1111,7 @@ const TALENT = {
     },
     {
       id: "spend-minor-telekinesis-vertical",
-      description: "<strong>Minor Telekinesis — Vertical Slide</strong> (Telekinesis): You can vertical slide the target instead of a normal slide.",
+      description: "<strong>Minor Telekinesis, Vertical Slide</strong> (Telekinesis): You can vertical slide the target instead of a normal slide.",
       cost: 3,
       minLevel: 1,
       requiresAbility: "Minor Telekinesis",
@@ -1138,7 +1138,7 @@ const TALENT = {
       minLevel: 5,
       requiresAbility: "Triangulate",
     },
-    // Level 6 — Psi Boost
+    // Level 6, Psi Boost
     {
       id: "spend-psi-boost",
       description: "<strong>Psi Boost:</strong> When you use a main action or maneuver with the Psionic keyword, you can spend clarity to apply one or more of the following boosts. Each boost can only be applied once per ability use:",
@@ -1189,7 +1189,7 @@ const TALENT = {
         },
       ],
     },
-    // Level 8 — Levitation Field (Telekinesis)
+    // Level 8, Levitation Field (Telekinesis)
     {
       id: "spend-levitation-field",
       description: "<strong>Levitation Field</strong> (Telekinesis): The fly effect from Levitation Field lasts for 1 hour instead of until the start of your next turn.",
@@ -1252,43 +1252,51 @@ const TROUBADOUR = {
       amount: 10,
       minLevel: 1,
     },
-    // Death Drama — description-only special
+    // Death Drama, description-only special
     {
       id: "death-drama",
       description: "<strong>Death Drama:</strong> When you are dead, you continue to gain drama during combat as long as your body is intact. If you have 30 drama during the encounter in which you died, you can come back to life with 1 Stamina and 0 drama (no action required).",
       minLevel: 1,
       isDescriptionOnly: true,
     },
-    // Level 4 — Melodrama triggers (all enabled; user selects 2 manually)
+    // Level 4, Melodrama triggers (all enabled; user selects 2 manually)
     {
-      id: "melodrama-natural-2",
-      description: "<strong>Melodrama:</strong> Whenever a creature rolls a natural 2 on a power roll, you gain 2 drama.",
-      amount: 2,
+      id: "melodrama-header",
+      description: "<strong>Melodrama</strong>: Choose two of the following triggers. All are shown, select the ones active for your hero.",
       minLevel: 4,
-    },
-    {
-      id: "melodrama-villain-action",
-      description: "<strong>Melodrama:</strong> The first time the Director deals damage to a hero using a Villain action or an ability that costs Malice, you gain 2 drama.",
-      amount: 2,
-      minLevel: 4,
-    },
-    {
-      id: "melodrama-fall",
-      description: "<strong>Melodrama:</strong> The first time a hero unwillingly falls 5 or more squares, you gain 2 drama.",
-      amount: 2,
-      minLevel: 4,
-    },
-    {
-      id: "melodrama-3-surges",
-      description: "<strong>Melodrama:</strong> The first time a hero deals damage with 3 surges, you gain 2 drama.",
-      amount: 2,
-      minLevel: 4,
-    },
-    {
-      id: "melodrama-last-recovery",
-      description: "<strong>Melodrama:</strong> Whenever a hero spends their last Recovery, you gain 2 drama.",
-      amount: 2,
-      minLevel: 4,
+      isGroupHeader: true,
+      children: [
+        {
+          id: "melodrama-natural-2",
+          description: "Whenever a creature rolls a natural 2 on a power roll, you gain 2 drama.",
+          amount: 2,
+          minLevel: 4,
+        },
+        {
+          id: "melodrama-villain-action",
+          description: "The first time the Director deals damage to a hero using a Villain action or an ability that costs Malice, you gain 2 drama.",
+          amount: 2,
+          minLevel: 4,
+        },
+        {
+          id: "melodrama-fall",
+          description: "The first time a hero unwillingly falls 5 or more squares, you gain 2 drama.",
+          amount: 2,
+          minLevel: 4,
+        },
+        {
+          id: "melodrama-3-surges",
+          description: "The first time a hero deals damage with 3 surges, you gain 2 drama.",
+          amount: 2,
+          minLevel: 4,
+        },
+        {
+          id: "melodrama-last-recovery",
+          description: "Whenever a hero spends their last Recovery, you gain 2 drama.",
+          amount: 2,
+          minLevel: 4,
+        },
+      ],
     },
   ],
 
@@ -1296,14 +1304,14 @@ const TROUBADOUR = {
     // Class Act Features (Maneuvers)
     {
       id: "spend-dramatic-monologue",
-      description: "<strong>Dramatic Monologue</strong> (Auteur — maneuver): Choose one effect: give one ally an edge on their next power roll before the start of your next turn; give one ally 1 surge; or give one enemy a bane on their next power roll before the end of their next turn.<br><strong>Spend 1 Drama:</strong> You can choose two targets for the chosen effect instead of one.",
+      description: "<strong>Dramatic Monologue</strong> (Auteur, maneuver): Choose one effect: give one ally an edge on their next power roll before the start of your next turn; give one ally 1 surge; or give one enemy a bane on their next power roll before the end of their next turn.<br><strong>Spend 1 Drama:</strong> You can choose two targets for the chosen effect instead of one.",
       cost: 1,
       minLevel: 1,
       requiresSubclass: "Auteur",
     },
     {
       id: "spend-star-power",
-      description: "<strong>Star Power</strong> (Duelist — maneuver): You gain a +2 bonus to speed until the end of your turn. Additionally, the next power roll you make this turn can't have an outcome lower than tier 2.<br><strong>Spend 1 Drama:</strong> You gain a +4 bonus to speed instead of +2.",
+      description: "<strong>Star Power</strong> (Duelist, maneuver): You gain a +2 bonus to speed until the end of your turn. Additionally, the next power roll you make this turn can't have an outcome lower than tier 2.<br><strong>Spend 1 Drama:</strong> You gain a +4 bonus to speed instead of +2.",
       cost: 1,
       minLevel: 1,
       requiresSubclass: "Duelist",
@@ -1311,8 +1319,8 @@ const TROUBADOUR = {
     // Class Act Triggered Actions
     {
       id: "spend-harmonize",
-      description: "<strong>Harmonize</strong> (Virtuoso — triggered action)<br><em>Trigger: An ally uses an ability that targets only one enemy and costs 3 or fewer of their Heroic Resource.</em><br>The target can choose one additional target for the triggering ability. Any damage dealt to the additional target is sonic damage.<br><strong>Spend 1+ Drama:</strong> You can trigger this ability when the target uses an ability with a Heroic Resource cost of 3 + each additional drama spent.",
-      cost: 3,
+      description: "<strong>Harmonize</strong> (Virtuoso, triggered action)<br><em>Trigger: An ally uses an ability that targets only one enemy and costs 3 or fewer of their Heroic Resource.</em><br>The target can choose one additional target for the triggering ability. Any damage dealt to the additional target is sonic damage.<br><strong>Spend 1+ Drama:</strong> You can trigger this ability when the target uses an ability with a Heroic Resource cost of 3 + each additional drama spent.",
+      cost: 1,
       minLevel: 1,
       requiresSubclass: "Virtuoso",
       action: "spendX",
@@ -1320,14 +1328,14 @@ const TROUBADOUR = {
     },
     {
       id: "spend-riposte",
-      description: "<strong>Riposte</strong> (Duelist — triggered action)<br><em>Trigger: You or one ally within melee 1 takes damage from a melee strike.</em><br>The target makes a free strike against the creature who made the triggering strike.",
+      description: "<strong>Riposte</strong> (Duelist, triggered action)<br><em>Trigger: You or one ally within melee 1 takes damage from a melee strike.</em><br>The target makes a free strike against the creature who made the triggering strike.",
       minLevel: 1,
       requiresSubclass: "Duelist",
       isDescriptionOnly: true,
     },
     {
       id: "spend-turnabout",
-      description: "<strong>Turnabout Is Fair Play</strong> (Auteur — triggered action)<br><em>Trigger: A creature within ranged 10 makes an ability roll that has an edge, double edge, bane, or double bane.</em><br>An edge becomes a bane, a double edge becomes an edge, a bane becomes an edge, or a double bane becomes a bane.<br><strong>Spend 3 Drama:</strong> An edge becomes a double bane, a double edge is negated, a bane becomes a double edge, or a double bane is negated.",
+      description: "<strong>Turnabout Is Fair Play</strong> (Auteur, triggered action)<br><em>Trigger: A creature within ranged 10 makes an ability roll that has an edge, double edge, bane, or double bane.</em><br>An edge becomes a bane, a double edge becomes an edge, a bane becomes an edge, or a double bane becomes a bane.<br><strong>Spend 3 Drama:</strong> An edge becomes a double bane, a double edge is negated, a bane becomes a double edge, or a double bane is negated.",
       cost: 3,
       minLevel: 1,
       requiresSubclass: "Auteur",
@@ -1350,14 +1358,14 @@ const TROUBADOUR = {
       minLevel: 1,
       requiresAbility: "Witty Banter",
     },
-    // Level 2 — Appeal to the Muses
+    // Level 2, Appeal to the Muses
     {
       id: "spend-appeal-to-muses",
-      description: "<strong>Appeal to the Muses</strong> (lv2, no action required): Before rolling for drama at the start of your turn, you can make an appeal:<ul><li><strong>Roll 1:</strong> You gain 1 additional drama. The Director gains 1d3 Malice.</li><li><strong>Roll 2:</strong> You gain 1 Heroic Resource, which you can keep or give to an ally within the distance of your active performance. The Director gains 1 Malice.</li><li><strong>Roll 3:</strong> You gain 2 of a Heroic Resource, which you can distribute among yourself and any allies within the distance of your active performance.</li></ul>",
+      description: "<strong>Appeal to the Muses</strong> (no action required): Before rolling for drama at the start of your turn, you can make an appeal:<ul><li><strong>Roll 1:</strong> You gain 1 additional drama. The Director gains 1d3 Malice.</li><li><strong>Roll 2:</strong> You gain 1 Heroic Resource, which you can keep or give to an ally within the distance of your active performance. The Director gains 1 Malice.</li><li><strong>Roll 3:</strong> You gain 2 of a Heroic Resource, which you can distribute among yourself and any allies within the distance of your active performance.</li></ul>",
       minLevel: 2,
       isDescriptionOnly: true,
     },
-    // Level 3 — Hypnotic Overtones
+    // Level 3, Hypnotic Overtones
     {
       id: "spend-hypnotic-overtones",
       description: "<strong>Hypnotic Overtones</strong> (main action): You make a power roll against each enemy in a 2 burst, dealing psychic damage and potentially dazing them.<br><strong>Spend 2+ Drama:</strong> The size of the burst increases by 1 for every 2 drama spent.",
@@ -1368,22 +1376,22 @@ const TROUBADOUR = {
       spendXTitle: "Hypnotic Overtones",
       spendXStep: 2,
     },
-    // Level 6 — Spotlight (Performance)
+    // Level 6, Spotlight (Performance)
     {
       id: "spend-spotlight",
       description: "<strong>Spotlight</strong> (performance, no action): While this performance is active, each target who starts their turn in the 5 aura gains 1 of their Heroic Resource. This Heroic Resource disappears at the end of the target's turn if they don't spend it.",
       minLevel: 6,
       isDescriptionOnly: true,
     },
-    // Level 8 — Deleted Scene (Auteur only)
+    // Level 8, Deleted Scene (Auteur only)
     {
       id: "spend-deleted-scene",
-      description: "<strong>Deleted Scene</strong> (Auteur — free triggered action): Whenever a creature within distance of your Dramatic Monologue ability makes a power roll, you can spend 1 drama to use Dramatic Monologue, targeting only one creature.",
+      description: "<strong>Deleted Scene</strong> (Auteur, free triggered action): Whenever a creature within distance of your Dramatic Monologue ability makes a power roll, you can spend 1 drama to use Dramatic Monologue, targeting only one creature.",
       cost: 1,
       minLevel: 8,
       requiresSubclass: "Auteur",
     },
-    // Level 9 — Roar of the Crowd
+    // Level 9, Roar of the Crowd
     {
       id: "spend-roar-of-the-crowd",
       description: "<strong>Roar of the Crowd:</strong> Whenever you spend a Recovery, you can forgo regaining Stamina to invoke the roar of an invisible applauding audience. You and each ally within 3 squares gain temporary Stamina equal to 10 + the number of active bonds from your Scene Partner feature + either your Victories or the number of players in your game (whichever is higher).",
