@@ -1,8 +1,10 @@
 {
   "id": "draw-steel-resources-ui",
-  "title": "Draw Steel - Resource Tracker",
+  "title": "Draw Steel - Resources UI",
   "description": "Track and manage Heroic Resources, Surges, and Hero Tokens for Draw Steel heroes.",
   "version": "1.0.0",
+  "manifest": "https://github.com/OmerCora/draw-steel-resources-ui/releases/latest/download/module.json",
+  "download": "https://github.com/OmerCora/draw-steel-resources-ui/releases/download/v1.0.0/draw-steel-resources-ui.zip",
   "compatibility": {
     "minimum": "13",
     "verified": "13.351"
@@ -38,6 +40,8 @@
       "path": "lang/en.json"
     }
   ],
-  "license": "LICENSE",
+  "license": "MIT",
+  "url": "https://github.com/OmerCora/draw-steel-resources-ui",
+  "bugs": "https://github.com/OmerCora/draw-steel-resources-ui/issues",
   "flags": {}
 }
