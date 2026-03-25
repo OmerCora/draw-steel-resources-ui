@@ -2,7 +2,7 @@
   "id": "draw-steel-resources-ui",
   "title": "Draw Steel - Resource Tracker",
   "description": "Track and manage Heroic Resources, Surges, and Hero Tokens for Draw Steel heroes.",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "compatibility": {
     "minimum": "13",
     "verified": "13.351"
