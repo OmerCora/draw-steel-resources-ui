@@ -49,6 +49,11 @@ Resource Tracker gives players and GMs a dedicated sidebar panel for managing al
 - Active/inactive status highlighted based on current resource value
 - Collapsible section to save panel space
 
+<img width="954" height="387" alt="Screenshot 2026-03-24 230200" src="https://github.com/user-attachments/assets/ab521cdd-7fbd-4413-a261-6d04697c596e" />
+<img width="672" height="649" alt="Screenshot 2026-03-24 230121" src="https://github.com/user-attachments/assets/a3bbd7a6-fd83-4f21-975e-ace9adb0c00f" />
+<img width="647" height="862" alt="Screenshot 2026-03-24 230101" src="https://github.com/user-attachments/assets/330ebed8-6bdc-4d31-a841-ae812100d9a4" />
+
+
 ## Installation
 
 Install via Foundry VTT's module browser by searching for **"Draw Steel - Resource Tracker"**, or paste the manifest URL into the Install Module dialog:
