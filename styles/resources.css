@@ -6,7 +6,7 @@
 /* ── Window chrome ─────────────────────────────────────── */
 
 .draw-steel-resources-ui {
-  min-width: 320px;
+  min-width: 360px;
 }
 
 .draw-steel-resources-ui .window-content {
@@ -692,8 +692,6 @@
   align-items: center;
   gap: 4px;
   flex-shrink: 0;
-  position: relative;
-  top: -4px;
 }
 
 .dsresources-spendx-adj {
@@ -708,6 +706,8 @@
   cursor: pointer;
   font-size: 12px;
   padding: 0;
+  position: relative;
+  top: -4px;
 }
 
 .dsresources-spendx-adj:hover {
@@ -722,6 +722,8 @@
   min-width: 24px;
   font-weight: 600;
   font-size: 14px;
+  position: relative;
+  top: -4px;
 }
 
 /* ── Growing Ferocity / Growth tables ──────────────────── */
