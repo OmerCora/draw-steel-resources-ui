@@ -184,7 +184,8 @@
           </button>
           {{else}}
           <button type="button" class="dsresources-entry-btn dsresources-entry-btn--gain"
-            data-action="gainHeroic" data-gain-id="{{this.id}}">
+            data-action="gainHeroic" data-gain-id="{{this.id}}"
+            {{#if this.isAutomated}}disabled title="Handled automatically by the system"{{/if}}>
             {{this.label}}
           </button>
           {{/if}}

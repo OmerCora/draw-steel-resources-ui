@@ -226,6 +226,7 @@ export class ResourceApp extends foundry.applications.api.HandlebarsApplicationM
             : gainLabel(e, actor),
           isPray: e.action === "pray",
           isMindRecovery: e.action === "mindRecovery",
+          isAutomated: e.id === "combat-start" || e.id.startsWith("turn-start"),
           children: processedChildren,
         });
       }
