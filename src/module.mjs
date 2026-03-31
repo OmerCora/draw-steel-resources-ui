@@ -35,6 +35,15 @@ Hooks.once("init", () => {
     },
   });
 
+  game.settings.register(MODULE_ID, "diceAnimation", {
+    name: game.i18n.localize("DSRESOURCES.Settings.DiceAnimation"),
+    hint: game.i18n.localize("DSRESOURCES.Settings.DiceAnimationHint"),
+    scope: "world",
+    config: true,
+    type: Boolean,
+    default: true,
+  });
+
   log("Initialized");
 });
 
