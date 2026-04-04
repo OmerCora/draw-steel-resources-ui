@@ -37,6 +37,12 @@ function combatTrackingEnabled() {
   catch { return false; }
 }
 
+/** Check whether shared (flag-based) combat tracking is enabled. */
+function sharedTrackingEnabled() {
+  try { return combatTrackingEnabled() && game.settings.get(MODULE_ID, "sharedTracking"); }
+  catch { return false; }
+}
+
 export class ResourceApp extends foundry.applications.api.HandlebarsApplicationMixin(
   foundry.applications.api.ApplicationV2
 ) {
@@ -126,14 +132,28 @@ export class ResourceApp extends foundry.applications.api.HandlebarsApplicationM
   _usedEntries = {};
 
   /** Mark an entry as used for a given actor. */
-  markEntryUsed(actorId, trackKey) {
-    if (!this._usedEntries[actorId]) this._usedEntries[actorId] = new Set();
-    this._usedEntries[actorId].add(trackKey);
-    this.render(false);
+  async markEntryUsed(actorId, trackKey) {
+    if (sharedTrackingEnabled()) {
+      const actor = game.actors.get(actorId);
+      if (!actor) return;
+      const current = actor.getFlag(MODULE_ID, "usedEntries") ?? [];
+      if (!current.includes(trackKey)) {
+        await actor.setFlag(MODULE_ID, "usedEntries", [...current, trackKey]);
+      }
+    } else {
+      if (!this._usedEntries[actorId]) this._usedEntries[actorId] = new Set();
+      this._usedEntries[actorId].add(trackKey);
+      this.render(false);
+    }
   }
 
   /** Check whether an entry is currently marked as used. */
   isEntryUsed(actorId, trackKey) {
+    if (sharedTrackingEnabled()) {
+      const actor = game.actors.get(actorId);
+      const entries = actor?.getFlag(MODULE_ID, "usedEntries") ?? [];
+      return entries.includes(trackKey);
+    }
     return this._usedEntries[actorId]?.has(trackKey) ?? false;
   }
 
@@ -141,29 +161,48 @@ export class ResourceApp extends foundry.applications.api.HandlebarsApplicationM
    * Reset used entries based on scope.
    * @param {"all"|"round"|"turn"} scope  "all" clears everything (encounter end), "round" clears turn+round scoped, "turn" clears only turn-scoped entries.
    */
-  resetUsedEntries(scope) {
-    if (scope === "all") {
-      this._usedEntries = {};
-    } else if (scope === "round") {
-      // Remove turn-scoped and round-scoped but keep encounter-scoped
-      for (const actorId of Object.keys(this._usedEntries)) {
-        const set = this._usedEntries[actorId];
-        for (const key of [...set]) {
-          if (key.startsWith("turn:") || key.startsWith("round:")) set.delete(key);
+  async resetUsedEntries(scope) {
+    if (sharedTrackingEnabled()) {
+      const heroes = getAllHeroActors();
+      for (const actor of heroes) {
+        const current = actor.getFlag(MODULE_ID, "usedEntries") ?? [];
+        if (current.length === 0) continue;
+        if (scope === "all") {
+          await actor.unsetFlag(MODULE_ID, "usedEntries");
+        } else {
+          const keep = current.filter((key) => {
+            if (scope === "round") return !key.startsWith("turn:") && !key.startsWith("round:");
+            return !key.startsWith("turn:"); // scope === "turn"
+          });
+          if (keep.length === 0) {
+            await actor.unsetFlag(MODULE_ID, "usedEntries");
+          } else {
+            await actor.setFlag(MODULE_ID, "usedEntries", keep);
+          }
         }
-        if (set.size === 0) delete this._usedEntries[actorId];
       }
-    } else if (scope === "turn") {
-      // Only remove keys tagged as turn-scoped
-      for (const actorId of Object.keys(this._usedEntries)) {
-        const set = this._usedEntries[actorId];
-        for (const key of [...set]) {
-          if (key.startsWith("turn:")) set.delete(key);
+    } else {
+      if (scope === "all") {
+        this._usedEntries = {};
+      } else if (scope === "round") {
+        for (const actorId of Object.keys(this._usedEntries)) {
+          const set = this._usedEntries[actorId];
+          for (const key of [...set]) {
+            if (key.startsWith("turn:") || key.startsWith("round:")) set.delete(key);
+          }
+          if (set.size === 0) delete this._usedEntries[actorId];
         }
-        if (set.size === 0) delete this._usedEntries[actorId];
+      } else if (scope === "turn") {
+        for (const actorId of Object.keys(this._usedEntries)) {
+          const set = this._usedEntries[actorId];
+          for (const key of [...set]) {
+            if (key.startsWith("turn:")) set.delete(key);
+          }
+          if (set.size === 0) delete this._usedEntries[actorId];
+        }
       }
+      this.render(false);
     }
-    this.render(false);
   }
 
   /**
@@ -1236,16 +1275,26 @@ export class ResourceApp extends foundry.applications.api.HandlebarsApplicationM
   // ── Actions: undo combat tracking ─────────────────────────────────────────
 
   /** Undo a combat-tracked usage (removes the used flag). */
-  static #undoUsage(_event, target) {
+  static async #undoUsage(_event, target) {
     const trackKey = target.dataset.trackKey;
     if (!trackKey) return;
     const actor = this.#getActiveActor();
     if (!actor) return;
-    const set = this._usedEntries[actor.id];
-    if (set) {
-      set.delete(trackKey);
-      if (set.size === 0) delete this._usedEntries[actor.id];
+    if (sharedTrackingEnabled()) {
+      const current = actor.getFlag(MODULE_ID, "usedEntries") ?? [];
+      const filtered = current.filter((k) => k !== trackKey);
+      if (filtered.length === 0) {
+        await actor.unsetFlag(MODULE_ID, "usedEntries");
+      } else {
+        await actor.setFlag(MODULE_ID, "usedEntries", filtered);
+      }
+    } else {
+      const set = this._usedEntries[actor.id];
+      if (set) {
+        set.delete(trackKey);
+        if (set.size === 0) delete this._usedEntries[actor.id];
+      }
+      this.render(false);
     }
-    this.render(false);
   }
 }

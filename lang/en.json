@@ -44,6 +44,8 @@
     "Settings": {
       "CombatTracking": "Combat Tracking",
       "CombatTrackingHint": "When enabled, once-per-turn and once-per-round abilities are disabled after use and reset when a new combat round begins.",
+      "SharedTracking": "Shared Combat Tracking",
+      "SharedTrackingHint": "When enabled, the used/unused state of combat-tracked abilities is shared between the GM and the player (requires Combat Tracking to be enabled).",
       "DiceAnimation": "Dice Animation",
       "DiceAnimationHint": "When enabled, heroic resource dice rolls trigger a 3D dice animation (requires the Dice So Nice module)."
     },

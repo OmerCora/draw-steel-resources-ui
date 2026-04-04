@@ -35,6 +35,18 @@ Hooks.once("init", () => {
     },
   });
 
+  game.settings.register(MODULE_ID, "sharedTracking", {
+    name: game.i18n.localize("DSRESOURCES.Settings.SharedTracking"),
+    hint: game.i18n.localize("DSRESOURCES.Settings.SharedTrackingHint"),
+    scope: "world",
+    config: true,
+    type: Boolean,
+    default: false,
+    onChange: () => {
+      if (ResourceApp._instance?.rendered) ResourceApp._instance.render(false);
+    },
+  });
+
   game.settings.register(MODULE_ID, "diceAnimation", {
     name: game.i18n.localize("DSRESOURCES.Settings.DiceAnimation"),
     hint: game.i18n.localize("DSRESOURCES.Settings.DiceAnimationHint"),
