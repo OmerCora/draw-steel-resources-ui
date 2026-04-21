@@ -1,5 +1,8 @@
 # Draw Steel - Resources UI
 
+[![Downloads](https://img.shields.io/github/downloads/OmerCora/draw-steel-resources-ui/total?label=Downloads&color=4aa94a)](https://github.com/OmerCora/draw-steel-resources-ui/releases)
+[![Foundry Installs](https://img.shields.io/endpoint?url=https://foundryshields.com/installs?packageName=draw-steel-resources-ui)](https://foundryvtt.com/packages/draw-steel-resources-ui)
+
 A Foundry VTT module for the [Draw Steel](https://mcdmproductions.com) system that provides a compact, always-visible panel to track and manage Heroic Resources, Surges, and Hero Tokens during play.
 
 ## Summary
