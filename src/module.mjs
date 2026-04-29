@@ -5,6 +5,7 @@
 
 import { MODULE_ID, SYSTEM_ID } from "./config.mjs";
 import { ResourceApp } from "./resources/resource-app.mjs";
+import { updateHeroicResource } from "./resources/resource-logic.mjs";
 
 const log = (...args) => console.log(`${MODULE_ID} |`, ...args);
 
@@ -64,7 +65,20 @@ Hooks.once("init", () => {
 Hooks.once("ready", () => {
   if (!_systemValid) return;
 
-  game.modules.get(MODULE_ID).api = { ResourceApp };
+  game.modules.get(MODULE_ID).api = {
+    ResourceApp,
+    buildHeroicTabData: (actor, spendXValues) => ResourceApp.buildHeroicTabData(actor, spendXValues),
+    executeGainHeroic: (actor, gainId) => ResourceApp.executeGainHeroic(actor, gainId),
+    executeSpendHeroic: (actor, spendId) => ResourceApp.executeSpendHeroic(actor, spendId),
+    executeConfirmSpendX: (actor, spendId, amount) => ResourceApp.executeConfirmSpendX(actor, spendId, amount),
+    undoEntry: (actor, trackKey) => ResourceApp.undoEntry(actor, trackKey),
+    adjustHeroicResource: (actor, delta) => updateHeroicResource(actor, delta),
+    executeMindRecovery: (actor) => ResourceApp.executeMindRecovery(actor),
+    executeStrainDamage: (actor) => ResourceApp.executeStrainDamage(actor),
+    executePray: (actor) => ResourceApp.executePray(actor),
+    executeGainGrowthSurge: (actor, surgeAmount, tableLabel, trackKey) =>
+      ResourceApp.executeGainGrowthSurge(actor, surgeAmount, tableLabel, trackKey),
+  };
 
   log("Ready");
 });

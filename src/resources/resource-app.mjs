@@ -126,10 +126,12 @@ export class ResourceApp extends foundry.applications.api.HandlebarsApplicationM
 
   /**
    * Combat tracking: entries used this round/turn, keyed by actorId.
+   * Stored as a STATIC class property so that external modules can read/write
+   * the tracking state even before any ResourceApp instance has been opened.
    * Each value is a Set of tracking keys (entry IDs or "growth:{tableId}:{surgeGroup}").
    * @type {Object<string, Set<string>>}
    */
-  _usedEntries = {};
+  static _usedEntries = {};
 
   /** Mark an entry as used for a given actor. */
   async markEntryUsed(actorId, trackKey) {
@@ -141,8 +143,8 @@ export class ResourceApp extends foundry.applications.api.HandlebarsApplicationM
         await actor.setFlag(MODULE_ID, "usedEntries", [...current, trackKey]);
       }
     } else {
-      if (!this._usedEntries[actorId]) this._usedEntries[actorId] = new Set();
-      this._usedEntries[actorId].add(trackKey);
+      if (!ResourceApp._usedEntries[actorId]) ResourceApp._usedEntries[actorId] = new Set();
+      ResourceApp._usedEntries[actorId].add(trackKey);
       this.render(false);
     }
   }
@@ -154,7 +156,7 @@ export class ResourceApp extends foundry.applications.api.HandlebarsApplicationM
       const entries = actor?.getFlag(MODULE_ID, "usedEntries") ?? [];
       return entries.includes(trackKey);
     }
-    return this._usedEntries[actorId]?.has(trackKey) ?? false;
+    return ResourceApp._usedEntries[actorId]?.has(trackKey) ?? false;
   }
 
   /**
@@ -183,22 +185,22 @@ export class ResourceApp extends foundry.applications.api.HandlebarsApplicationM
       }
     } else {
       if (scope === "all") {
-        this._usedEntries = {};
+        ResourceApp._usedEntries = {};
       } else if (scope === "round") {
-        for (const actorId of Object.keys(this._usedEntries)) {
-          const set = this._usedEntries[actorId];
+        for (const actorId of Object.keys(ResourceApp._usedEntries)) {
+          const set = ResourceApp._usedEntries[actorId];
           for (const key of [...set]) {
             if (key.startsWith("turn:") || key.startsWith("round:")) set.delete(key);
           }
-          if (set.size === 0) delete this._usedEntries[actorId];
+          if (set.size === 0) delete ResourceApp._usedEntries[actorId];
         }
       } else if (scope === "turn") {
-        for (const actorId of Object.keys(this._usedEntries)) {
-          const set = this._usedEntries[actorId];
+        for (const actorId of Object.keys(ResourceApp._usedEntries)) {
+          const set = ResourceApp._usedEntries[actorId];
           for (const key of [...set]) {
             if (key.startsWith("turn:")) set.delete(key);
           }
-          if (set.size === 0) delete this._usedEntries[actorId];
+          if (set.size === 0) delete ResourceApp._usedEntries[actorId];
         }
       }
       this.render(false);
@@ -1289,12 +1291,643 @@ export class ResourceApp extends foundry.applications.api.HandlebarsApplicationM
         await actor.setFlag(MODULE_ID, "usedEntries", filtered);
       }
     } else {
-      const set = this._usedEntries[actor.id];
+      const set = ResourceApp._usedEntries[actor.id];
       if (set) {
         set.delete(trackKey);
-        if (set.size === 0) delete this._usedEntries[actor.id];
+        if (set.size === 0) delete ResourceApp._usedEntries[actor.id];
       }
       this.render(false);
     }
+  }
+
+  // ── Public API for cross-module use ───────────────────────────────────────
+
+  /**
+   * Build heroic tab context data for a given actor.
+   * For use by external modules (e.g. draw-steel-ability-hud).
+   * @param {Actor} actor
+   * @param {Object} [spendXValues] — Inline spend X state keyed by entry id
+   */
+  static async buildHeroicTabData(actor, spendXValues = {}) {
+    if (!actor) return null;
+    const classItem = getClassItem(actor);
+    const classDef  = getClassDefinition(actor);
+    const heroLevel = getHeroLevel(actor);
+    const resourceName = classItem?.system?.primary ?? game.i18n.localize("DSRESOURCES.HeroicResource");
+    const heroicValue = actor.system.hero?.primary?.value ?? 0;
+
+    let trackingOn = false;
+    try { trackingOn = game.settings.get(MODULE_ID, "combatTracking"); } catch { /* ok */ }
+
+    const trackInfo = (entry) => {
+      if (!trackingOn || !entry.trackUsage) return { isUsed: false, trackKey: null };
+      const prefix = entry.trackUsage === "turn" ? "turn" : entry.trackUsage === "encounter" ? "encounter" : "round";
+      const trackKey = `${prefix}:${entry.id}`;
+      return { isUsed: ResourceApp.#staticIsEntryUsed(actor.id, trackKey), trackKey };
+    };
+    const growthTrackInfo = (row, tableId) => {
+      if (!trackingOn || !row.trackUsage || !row.surgeGroup) return { isUsed: false, trackKey: null };
+      const prefix = row.trackUsage === "turn" ? "turn" : row.trackUsage === "encounter" ? "encounter" : "round";
+      const trackKey = `${prefix}:growth:${tableId}:${row.surgeGroup}`;
+      return { isUsed: ResourceApp.#staticIsEntryUsed(actor.id, trackKey), trackKey };
+    };
+
+    let gains = [], spends = [], passiveEffects = [], growthTables = [], classFeature = null;
+
+    if (classDef) {
+      const enrichOpts = { rollData: actor.getRollData(), async: true };
+
+      // ── Gains ────────────────────────────────────────────────────────────
+      for (const e of resolveEntries(classDef.gains, heroLevel)) {
+        if (e.action === "domain") {
+          const domains = actor.items.filter(i => i.type === "subclass");
+          for (const domain of domains) {
+            const trigger = DOMAIN_PIETY_TABLE[domain.name];
+            if (!trigger) continue;
+            gains.push({
+              ...e,
+              description: await TextEditor.enrichHTML(`<strong>${domain.name}:</strong> ${trigger}`, enrichOpts),
+              label: gainLabel(e, actor),
+              isPray: false,
+            });
+          }
+          continue;
+        }
+        let processedChildren;
+        if (e.isGroupHeader && e.children?.length) {
+          processedChildren = [];
+          for (const child of e.children) {
+            if (child.minLevel > heroLevel) continue;
+            processedChildren.push({
+              ...child,
+              description: await TextEditor.enrichHTML(child.description, enrichOpts),
+              label: gainLabel(child, actor),
+              ...trackInfo(child),
+            });
+          }
+        }
+        gains.push({
+          ...e,
+          description: await TextEditor.enrichHTML(e.description, enrichOpts),
+          label: e.action === "pray" ? game.i18n.localize("DSRESOURCES.Conduit.Pray")
+            : e.action === "mindRecovery" ? game.i18n.localize("DSRESOURCES.Talent.MindRecoveryBtn")
+            : gainLabel(e, actor),
+          isPray: e.action === "pray",
+          isMindRecovery: e.action === "mindRecovery",
+          isAutomated: e.id === "combat-start" || e.id.startsWith("turn-start"),
+          children: processedChildren,
+          ...trackInfo(e),
+        });
+      }
+
+      // ── Spends ───────────────────────────────────────────────────────────
+      for (const e of resolveEntries(classDef.spends, heroLevel)) {
+        if (e.requiresAbility && !actor.items.some(i => i.name === e.requiresAbility && i.type === "ability")) continue;
+        if (e.requiresSubclass) {
+          const t = e.requiresSubclass.toLowerCase();
+          if (!(actor.itemTypes?.subclass ?? []).some(i => i.name?.toLowerCase() === t || i.system?._dsid?.toLowerCase() === t)) continue;
+        }
+        const isSpendX = e.action === "spendX";
+        let spendXValue, spendXMin, spendXMax;
+        if (isSpendX) {
+          const step = e.spendXStep ?? 1;
+          const allowNeg = classDef?.classFeature?.allowNegative ?? false;
+          const effectiveResource = allowNeg
+            ? heroicValue + (1 + (actor.getRollData?.()?.characteristics?.reason?.value ?? 0))
+            : heroicValue;
+          spendXMin = e.cost ?? 1;
+          spendXMax = Math.floor(effectiveResource / step) * step;
+          if (e.spendXHardMax) spendXMax = Math.min(spendXMax, e.spendXHardMax);
+          if (spendXMax < spendXMin) spendXMax = spendXMin;
+          const raw = spendXValues[e.id] ?? spendXMin;
+          spendXValue = Math.max(spendXMin, Math.min(spendXMax, raw));
+        }
+        let processedChildren;
+        if (e.isGroupHeader && e.children?.length) {
+          processedChildren = [];
+          for (const child of e.children) {
+            if (child.minLevel > heroLevel) continue;
+            if (child.requiresSubclass) {
+              const ct = child.requiresSubclass.toLowerCase();
+              if (!(actor.itemTypes?.subclass ?? []).some(i => i.name?.toLowerCase() === ct || i.system?._dsid?.toLowerCase() === ct)) continue;
+            }
+            processedChildren.push({
+              ...child,
+              description: await TextEditor.enrichHTML(child.description, enrichOpts),
+              label: spendLabel(child),
+              isSpendX: false,
+              ...trackInfo(child),
+            });
+          }
+        }
+        spends.push({
+          ...e,
+          description: await TextEditor.enrichHTML(e.description, enrichOpts),
+          label: isSpendX
+            ? game.i18n.format("DSRESOURCES.SpendX", { name: e.spendXTitle })
+            : spendLabel(e),
+          isSpendX,
+          spendXValue,
+          spendXMin,
+          spendXMax,
+          children: processedChildren,
+          ...trackInfo(e),
+        });
+      }
+
+      // ── Passive effects ──────────────────────────────────────────────────
+      for (const pe of (classDef.passiveEffects ?? []).filter(pe => pe.minLevel <= heroLevel)) {
+        passiveEffects.push({
+          ...pe,
+          description: await TextEditor.enrichHTML(pe.description, enrichOpts),
+          isActive: heroicValue >= pe.threshold,
+        });
+      }
+
+      // ── Growth tables ────────────────────────────────────────────────────
+      if (classDef.growthTables?.length) {
+        for (const table of classDef.growthTables) {
+          if (table.requiresSubclass && !actor.items.some(i => i.name === table.requiresSubclass && i.type === "subclass")) continue;
+          if (table.requiresKit && !actor.items.some(i => i.name === table.requiresKit && i.type === "kit")) continue;
+          const eligibleRows = table.rows.filter(r => r.minLevel <= heroLevel);
+          const processedRows = [];
+          for (const row of eligibleRows) {
+            processedRows.push({
+              ...row,
+              description: await TextEditor.enrichHTML(row.description, enrichOpts),
+              isActive: heroicValue >= row.threshold,
+              ...growthTrackInfo(row, table.id),
+            });
+          }
+          const activeGroupMax = {};
+          for (const row of processedRows) {
+            if (row.isActive && row.grantsSurge && row.surgeGroup) {
+              if (!activeGroupMax[row.surgeGroup] || row.threshold > activeGroupMax[row.surgeGroup])
+                activeGroupMax[row.surgeGroup] = row.threshold;
+            }
+          }
+          for (const row of processedRows) {
+            row.showSurgeButton = row.isActive && row.grantsSurge > 0
+              && (!row.surgeGroup || activeGroupMax[row.surgeGroup] === row.threshold);
+            row.surgeButtonAmount = row.grantsSurge ?? 0;
+          }
+          let tableDescription;
+          if (table.description) tableDescription = await TextEditor.enrichHTML(table.description, enrichOpts);
+          growthTables.push({ id: table.id, label: table.label, description: tableDescription, rows: processedRows });
+        }
+      }
+
+      // ── Class feature (Mantle / Strain) ─────────────────────────────────
+      if (classDef.classFeature) {
+        const cf = classDef.classFeature;
+        if (cf.type === "mantle") {
+          if (heroLevel >= cf.minLevel) {
+            const stamina = actor.system.stamina?.value ?? 0;
+            const isDying = stamina <= 0;
+            const noThreshold = heroLevel >= cf.noThresholdLevel;
+            const isActive = !isDying && (noThreshold || heroicValue >= cf.threshold);
+            let description = "";
+            if (cf.subclassDescriptions) {
+              for (const [subName, desc] of Object.entries(cf.subclassDescriptions)) {
+                if (actor.items.some(i => i.name === subName && i.type === "subclass")) {
+                  description = await TextEditor.enrichHTML(desc, enrichOpts);
+                  break;
+                }
+              }
+            }
+            classFeature = {
+              type: cf.type,
+              label: cf.label,
+              isActive,
+              activeColor: cf.activeColor ?? "green",
+              description,
+            };
+          }
+        } else if (cf.type === "strain") {
+          const isActive = heroicValue < 0;
+          const description = await TextEditor.enrichHTML(cf.description, enrichOpts);
+          classFeature = {
+            type: cf.type,
+            label: cf.label,
+            inactiveLabel: cf.inactiveLabel,
+            isActive,
+            activeColor: cf.activeColor ?? "red",
+            description,
+            allowNegative: cf.allowNegative ?? false,
+            strainAmount: isActive ? Math.abs(heroicValue) : 0,
+          };
+        }
+      }
+    }
+
+    return {
+      resourceName,
+      heroicValue,
+      gains,
+      spends,
+      passiveEffects,
+      growthTables,
+      classFeature,
+      noClassData: !classDef || (gains.length === 0 && spends.length === 0),
+      hasPassiveEffects: passiveEffects.length > 0,
+      className: classDef?.className ?? classItem?.name ?? "",
+      actorId: actor.id,
+    };
+  }
+
+  /**
+   * Execute a gain entry for the given actor. Used by external modules.
+   * @param {Actor} actor
+   * @param {string} gainId
+   */
+  static async executeGainHeroic(actor, gainId) {
+    const classDef = getClassDefinition(actor);
+    if (!classDef) return;
+    const heroLevel = getHeroLevel(actor);
+    const entries = resolveEntries(classDef.gains, heroLevel);
+    let entry = entries.find(e => e.id === gainId);
+    if (!entry) {
+      for (const e of entries) {
+        if (e.children) { entry = e.children.find(c => c.id === gainId); if (entry) break; }
+      }
+    }
+    if (!entry) return;
+
+    // Route special-action entries to their dedicated handlers
+    if (entry.action === "mindRecovery") return ResourceApp.executeMindRecovery(actor);
+    if (entry.action === "pray")         return ResourceApp.executePray(actor);
+
+    const { total, roll, formula } = await resolveGainAmount(entry, actor);
+    const resourceName = getClassItem(actor)?.system?.primary ?? "Resource";
+    const result = await updateHeroicResource(actor, total);
+
+    if (roll) {
+      const rollHtml = await roll.render();
+      const speaker = ChatMessage.getSpeaker({ actor });
+      let diceAnim = true;
+      try { diceAnim = game.settings.get(MODULE_ID, "diceAnimation"); } catch { /* no-op */ }
+      await ChatMessage.create({
+        user: game.user.id, speaker,
+        content: `<div class="dsresources-chat-card">
+          <div class="dsresources-chat-header"><strong>${speaker.alias}</strong> ${game.i18n.localize("DSRESOURCES.Chat.Gained")} <strong>${total}</strong> ${resourceName}</div>
+          <div class="dsresources-chat-method">${entry.description}</div>
+          <div class="dsresources-chat-roll">${rollHtml}</div>
+          <div class="dsresources-chat-summary">${resourceName}: ${result.previous} → ${result.current}</div>
+        </div>`,
+        ...(diceAnim && { rolls: [roll] }),
+      });
+    } else {
+      await postResourceChat(actor, {
+        resourceName,
+        action: game.i18n.localize("DSRESOURCES.Chat.Gained"),
+        amount: total,
+        method: entry.description,
+        previous: result.previous,
+        current: result.current,
+        formula,
+      });
+    }
+    // Combat tracking: mark used
+    if (entry.trackUsage) {
+      const prefix = entry.trackUsage === "turn" ? "turn" : entry.trackUsage === "encounter" ? "encounter" : "round";
+      await ResourceApp.#staticMarkEntryUsed(actor, `${prefix}:${entry.id}`);
+    }
+  }
+
+  /**
+   * Execute a spend entry for the given actor. Used by external modules.
+   * spendX entries are handled via executeConfirmSpendX instead.
+   * @param {Actor} actor
+   * @param {string} spendId
+   */
+  static async executeSpendHeroic(actor, spendId) {
+    const classDef = getClassDefinition(actor);
+    if (!classDef) return;
+    const heroLevel = getHeroLevel(actor);
+    const entries = resolveEntries(classDef.spends, heroLevel);
+    let entry = entries.find(e => e.id === spendId);
+    if (!entry) {
+      for (const e of entries) {
+        if (e.children) { entry = e.children.find(c => c.id === spendId); if (entry) break; }
+      }
+    }
+    if (!entry || entry.action === "spendX") return;
+
+    const current = actor.system.hero?.primary?.value ?? 0;
+    const allowNeg = classDef?.classFeature?.allowNegative ?? false;
+    if (!allowNeg && current < entry.cost) {
+      ui.notifications.warn(game.i18n.localize("DSRESOURCES.Notify.NotEnough"));
+      return;
+    }
+    if (allowNeg) {
+      const reason = actor.getRollData?.()?.characteristics?.reason?.value ?? 0;
+      if (current - entry.cost < -(1 + reason)) {
+        ui.notifications.warn(game.i18n.localize("DSRESOURCES.Notify.NotEnough"));
+        return;
+      }
+    }
+
+    const resourceName = getClassItem(actor)?.system?.primary ?? "Resource";
+    const opts = allowNeg ? { minValue: -(1 + (actor.getRollData?.()?.characteristics?.reason?.value ?? 0)) } : {};
+    const result = await updateHeroicResource(actor, -entry.cost, opts);
+
+    if (entry.grantsSurge) await updateSurges(actor, entry.grantsSurge);
+
+    let damageRoll = null, damageType = null;
+    if (entry.damage) {
+      damageRoll = new Roll(entry.damage.formula);
+      await damageRoll.evaluate();
+      damageType = entry.damage.type ?? null;
+    }
+
+    const method = entry.grantsSurge
+      ? `${entry.description}<br><em>Gained ${entry.grantsSurge} surge${entry.grantsSurge > 1 ? "s" : ""}.</em>`
+      : entry.description;
+
+    await postResourceChat(actor, {
+      resourceName,
+      action: game.i18n.localize("DSRESOURCES.Chat.Spent"),
+      amount: entry.cost,
+      method,
+      previous: result.previous,
+      current: result.current,
+      damageRoll,
+      damageType,
+    });
+    // Combat tracking: mark used
+    if (entry.trackUsage) {
+      const prefix = entry.trackUsage === "turn" ? "turn" : entry.trackUsage === "encounter" ? "encounter" : "round";
+      await ResourceApp.#staticMarkEntryUsed(actor, `${prefix}:${entry.id}`);
+    }
+  }
+
+  /**
+   * Execute a spendX entry for the given actor. Used by external modules.
+   * @param {Actor} actor
+   * @param {string} spendId
+   * @param {number} amount
+   */
+  static async executeConfirmSpendX(actor, spendId, amount) {
+    const classDef = getClassDefinition(actor);
+    if (!classDef) return;
+    const heroLevel = getHeroLevel(actor);
+    const entries = resolveEntries(classDef.spends, heroLevel);
+    const entry = entries.find(e => e.id === spendId);
+    if (!entry || entry.action !== "spendX") return;
+
+    const current = actor.system.hero?.primary?.value ?? 0;
+    const allowNeg = classDef?.classFeature?.allowNegative ?? false;
+    if (!allowNeg && current < amount) {
+      ui.notifications.warn(game.i18n.localize("DSRESOURCES.Notify.NotEnough"));
+      return;
+    }
+    if (allowNeg) {
+      const reason = actor.getRollData?.()?.characteristics?.reason?.value ?? 0;
+      if (current - amount < -(1 + reason)) {
+        ui.notifications.warn(game.i18n.localize("DSRESOURCES.Notify.NotEnough"));
+        return;
+      }
+    }
+
+    const resourceName = getClassItem(actor)?.system?.primary ?? "Resource";
+    const opts = allowNeg ? { minValue: -(1 + (actor.getRollData?.()?.characteristics?.reason?.value ?? 0)) } : {};
+    const result = await updateHeroicResource(actor, -amount, opts);
+
+    let surgesGained = 0;
+    if (entry.grantsSurgePerSpend) {
+      const step = entry.spendXStep ?? 1;
+      surgesGained = Math.floor(amount / step) * entry.grantsSurgePerSpend;
+      if (surgesGained > 0) await updateSurges(actor, surgesGained);
+    }
+
+    const title = entry.spendXTitle ?? game.i18n.localize("DSRESOURCES.Section.Spend");
+    const surgeNote = surgesGained > 0
+      ? `<div class="dsresources-chat-detail"><em>Gained ${surgesGained} surge${surgesGained > 1 ? "s" : ""}.</em></div>`
+      : "";
+
+    const speaker = ChatMessage.getSpeaker({ actor });
+    const content = `
+      <div class="dsresources-chat-card">
+        <div class="dsresources-chat-header">
+          <strong>${speaker.alias}</strong> ${game.i18n.localize("DSRESOURCES.Chat.Spent")} <strong>${amount}</strong> ${resourceName}
+        </div>
+        <div class="dsresources-chat-method">${title} (${amount} ${resourceName})</div>
+        ${surgeNote}
+        <div class="dsresources-chat-summary">
+          ${resourceName}: ${result.previous} → ${result.current}
+        </div>
+      </div>`;
+    await ChatMessage.create({ user: game.user.id, speaker, content });
+    // Combat tracking: mark used
+    if (entry.trackUsage) {
+      const prefix = entry.trackUsage === "turn" ? "turn" : entry.trackUsage === "encounter" ? "encounter" : "round";
+      await ResourceApp.#staticMarkEntryUsed(actor, `${prefix}:${entry.id}`);
+    }
+  }
+
+  /**
+   * Undo a combat-tracked entry for an actor. Used by external modules.
+   * @param {Actor} actor
+   * @param {string} trackKey
+   */
+  static async undoEntry(actor, trackKey) {
+    if (!actor || !trackKey) return;
+    let sharedOn = false;
+    try { sharedOn = game.settings.get(MODULE_ID, "combatTracking") && game.settings.get(MODULE_ID, "sharedTracking"); } catch { /* ok */ }
+    if (sharedOn) {
+      const current = actor.getFlag(MODULE_ID, "usedEntries") ?? [];
+      const filtered = current.filter(k => k !== trackKey);
+      if (filtered.length === 0) await actor.unsetFlag(MODULE_ID, "usedEntries");
+      else await actor.setFlag(MODULE_ID, "usedEntries", filtered);
+    } else {
+      const set = ResourceApp._usedEntries[actor.id];
+      if (set) {
+        set.delete(trackKey);
+        if (set.size === 0) delete ResourceApp._usedEntries[actor.id];
+      }
+      ResourceApp._instance?.render(false);
+    }
+  }
+
+  /** Internal: shared static read for tracking (works without an instance). */
+  static #staticIsEntryUsed(actorId, trackKey) {
+    let sharedOn = false;
+    try { sharedOn = game.settings.get(MODULE_ID, "combatTracking") && game.settings.get(MODULE_ID, "sharedTracking"); } catch { /* ok */ }
+    if (sharedOn) {
+      const actor = game.actors.get(actorId);
+      const entries = actor?.getFlag(MODULE_ID, "usedEntries") ?? [];
+      return entries.includes(trackKey);
+    }
+    return ResourceApp._usedEntries[actorId]?.has(trackKey) ?? false;
+  }
+
+  /** Internal: shared static write for tracking (works without an instance). */
+  static async #staticMarkEntryUsed(actor, trackKey) {
+    let sharedOn = false;
+    try { sharedOn = game.settings.get(MODULE_ID, "combatTracking") && game.settings.get(MODULE_ID, "sharedTracking"); } catch { /* ok */ }
+    if (sharedOn) {
+      const current = actor.getFlag(MODULE_ID, "usedEntries") ?? [];
+      if (!current.includes(trackKey)) {
+        await actor.setFlag(MODULE_ID, "usedEntries", [...current, trackKey]);
+      }
+    } else {
+      if (!ResourceApp._usedEntries[actor.id]) ResourceApp._usedEntries[actor.id] = new Set();
+      ResourceApp._usedEntries[actor.id].add(trackKey);
+      ResourceApp._instance?.render(false);
+    }
+  }
+
+  /**
+   * Talent: Mind Recovery — spend 1 recovery to gain 3 clarity.
+   * Used by external modules.
+   * @param {Actor} actor
+   */
+  static async executeMindRecovery(actor) {
+    if (!actor) return;
+    const recoveries = actor.system.recoveries?.value ?? 0;
+    if (recoveries <= 0) {
+      ui.notifications.warn(game.i18n.localize("DSRESOURCES.Talent.NoRecoveries"));
+      return;
+    }
+    await actor.update({ "system.recoveries.value": recoveries - 1 });
+    const result = await updateHeroicResource(actor, 3);
+    const resourceName = getClassItem(actor)?.system?.primary ?? "Clarity";
+    const speaker = ChatMessage.getSpeaker({ actor });
+    const content = `
+      <div class="dsresources-chat-card">
+        <div class="dsresources-chat-header">
+          <strong>${speaker.alias}</strong>, ${game.i18n.localize("DSRESOURCES.Talent.MindRecovery")}
+        </div>
+        <div class="dsresources-chat-method">
+          ${game.i18n.format("DSRESOURCES.Talent.MindRecoveryDesc", { recoveries: recoveries - 1 })}
+        </div>
+        <div class="dsresources-chat-summary">
+          ${resourceName}: ${result.previous} → ${result.current}
+        </div>
+      </div>`;
+    await ChatMessage.create({ user: game.user.id, speaker, content });
+  }
+
+  /**
+   * Talent: Strain Damage — when heroic resource is negative, take damage equal to abs(value).
+   * @param {Actor} actor
+   */
+  static async executeStrainDamage(actor) {
+    if (!actor) return;
+    const heroicValue = actor.system.hero?.primary?.value ?? 0;
+    if (heroicValue >= 0) {
+      ui.notifications.warn(game.i18n.localize("DSRESOURCES.Talent.NotStrained"));
+      return;
+    }
+    const damage = Math.abs(heroicValue);
+    const speaker = ChatMessage.getSpeaker({ actor });
+    const enrichOpts = { rollData: actor.getRollData(), async: true };
+    const enrichedDamage = await TextEditor.enrichHTML(`[[/damage ${damage}]]`, enrichOpts);
+    const desc = game.i18n.format("DSRESOURCES.Talent.StrainDamageDesc", { damage: enrichedDamage });
+    const content = `
+      <div class="dsresources-chat-card">
+        <div class="dsresources-chat-header">
+          <strong>${speaker.alias}</strong>, ${game.i18n.localize("DSRESOURCES.Talent.StrainDamage")}
+        </div>
+        <div class="dsresources-chat-method">${desc}</div>
+      </div>`;
+    await ChatMessage.create({ user: game.user.id, speaker, content });
+  }
+
+  /**
+   * Growth table: gain N surges from a reached threshold (e.g. Fury "Growing Ferocity").
+   * @param {Actor} actor
+   * @param {number} surgeAmount
+   * @param {string} tableLabel
+   * @param {string|null} trackKey
+   */
+  static async executeGainGrowthSurge(actor, surgeAmount, tableLabel, trackKey = null) {
+    if (!actor) return;
+    const count = Number(surgeAmount) || 1;
+    const result = await updateSurges(actor, count);
+    await postResourceChat(actor, {
+      resourceName: game.i18n.localize("DSRESOURCES.Tabs.Surge"),
+      action: game.i18n.localize("DSRESOURCES.Chat.Gained"),
+      amount: count,
+      method: `${tableLabel}, ${game.i18n.localize("DSRESOURCES.GrowthSurge")}`,
+      previous: result.previous,
+      current: result.current,
+    });
+    if (trackKey) await ResourceApp.#staticMarkEntryUsed(actor, trackKey);
+  }
+
+  /**
+   * Conduit: Pray — roll 1d3 for the bonus piety effect.
+   * @param {Actor} actor
+   */
+  static async executePray(actor) {
+    if (!actor) return;
+    const classDef = getClassDefinition(actor);
+    if (!classDef?.prayResults) return;
+    const heroLevel = getHeroLevel(actor);
+    const resourceName = getClassItem(actor)?.system?.primary ?? "Piety";
+
+    const prayRoll = new Roll("1d3");
+    await prayRoll.evaluate();
+    const d3Result = prayRoll.total;
+    const prayData = classDef.prayResults[d3Result] ?? classDef.prayResults[1];
+
+    let totalPiety = prayData.pietyBonus ?? 0;
+    let lv10Bonus = 0;
+    if (classDef.prayLv10Bonus && heroLevel >= classDef.prayLv10Bonus.minLevel) {
+      lv10Bonus = classDef.prayLv10Bonus.pietyBonus;
+      totalPiety += lv10Bonus;
+    }
+    const result = await updateHeroicResource(actor, totalPiety);
+
+    const enrichOpts = { rollData: actor.getRollData(), async: true };
+    const rollHtml = await prayRoll.render();
+
+    const bonusLines = [];
+    bonusLines.push(`<strong>${prayData.label}:</strong> ${prayData.description}`);
+    if (lv10Bonus > 0) bonusLines.push(`<strong>Most Pious:</strong> +${lv10Bonus} additional piety.`);
+
+    let damageHtml = "";
+    if (prayData.damageEnricher) {
+      const enrichedDmg = await TextEditor.enrichHTML(prayData.damageEnricher, enrichOpts);
+      damageHtml = `<div class="dsresources-chat-damage">${enrichedDmg}</div>`;
+    }
+
+    let domainHtml = "";
+    if (prayData.domainChoice) {
+      const domains = actor.items.filter((i) => i.type === "subclass");
+      const prayerParts = [];
+      for (const d of domains) {
+        const effect = DOMAIN_PRAYER_EFFECTS[d.name];
+        if (!effect) continue;
+        const enrichedEffect = await TextEditor.enrichHTML(effect, enrichOpts);
+        prayerParts.push(`<div><strong>${d.name}:</strong> ${enrichedEffect}</div>`);
+      }
+      const prayerLines = prayerParts.join("");
+      domainHtml = `<div class="dsresources-chat-domain">
+        <em>Activate a domain effect of your choice:</em>
+        ${prayerLines}
+      </div>`;
+    }
+
+    const speaker = ChatMessage.getSpeaker({ actor });
+    const content = `
+      <div class="dsresources-chat-card">
+        <div class="dsresources-chat-header">
+          <strong>${speaker.alias}</strong> prayed and gained <strong>${totalPiety}</strong> ${resourceName}
+        </div>
+        <div class="dsresources-chat-method">${game.i18n.localize("DSRESOURCES.Conduit.PrayMethod")}</div>
+        <div class="dsresources-chat-roll">${rollHtml}</div>
+        <div class="dsresources-chat-pray-result">
+          ${bonusLines.map((l) => `<div>${l}</div>`).join("")}
+        </div>
+        ${damageHtml}
+        ${domainHtml}
+        <div class="dsresources-chat-summary">
+          ${resourceName}: ${result.previous} → ${result.current}
+        </div>
+      </div>`;
+
+    await ChatMessage.create({ user: game.user.id, speaker, content });
   }
 }
