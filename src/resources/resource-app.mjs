@@ -8,6 +8,9 @@
 
 import { MODULE_ID } from "../config.mjs";
 import { DOMAIN_PIETY_TABLE, DOMAIN_PRAYER_EFFECTS } from "./resource-data.mjs";
+
+/** Alias to suppress Foundry v13 deprecation warning for global TextEditor. */
+const TextEditor = foundry.applications.ux.TextEditor.implementation;
 import {
   getHeroActor,
   getAllHeroActors,
@@ -164,6 +167,17 @@ export class ResourceApp extends foundry.applications.api.HandlebarsApplicationM
    * @param {"all"|"round"|"turn"} scope  "all" clears everything (encounter end), "round" clears turn+round scoped, "turn" clears only turn-scoped entries.
    */
   async resetUsedEntries(scope) {
+    await ResourceApp.resetUsedEntries(scope);
+  }
+
+  // ── Public API for cross-module use ───────────────────────────────────────
+
+  /**
+   * Reset used entries based on scope. Static so embedded consumers can reset
+   * tracking even when the standalone ResourceApp window has never been opened.
+   * @param {"all"|"round"|"turn"} scope  "all" clears everything (encounter end), "round" clears turn+round scoped, "turn" clears only turn-scoped entries.
+   */
+  static async resetUsedEntries(scope) {
     if (sharedTrackingEnabled()) {
       const heroes = getAllHeroActors();
       for (const actor of heroes) {
@@ -203,8 +217,9 @@ export class ResourceApp extends foundry.applications.api.HandlebarsApplicationM
           if (set.size === 0) delete ResourceApp._usedEntries[actorId];
         }
       }
-      this.render(false);
     }
+    ResourceApp._instance?.render(false);
+    Hooks.callAll("dsresources.trackingReset", { scope });
   }
 
   /**

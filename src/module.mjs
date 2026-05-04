@@ -33,6 +33,7 @@ Hooks.once("init", () => {
     default: false,
     onChange: () => {
       if (ResourceApp._instance?.rendered) ResourceApp._instance.render(false);
+      Hooks.callAll("dsresources.trackingChanged");
     },
   });
 
@@ -45,6 +46,7 @@ Hooks.once("init", () => {
     default: false,
     onChange: () => {
       if (ResourceApp._instance?.rendered) ResourceApp._instance.render(false);
+      Hooks.callAll("dsresources.trackingChanged");
     },
   });
 
@@ -76,6 +78,7 @@ Hooks.once("ready", () => {
     executeMindRecovery: (actor) => ResourceApp.executeMindRecovery(actor),
     executeStrainDamage: (actor) => ResourceApp.executeStrainDamage(actor),
     executePray: (actor) => ResourceApp.executePray(actor),
+    resetUsedEntries: (scope) => ResourceApp.resetUsedEntries(scope),
     executeGainGrowthSurge: (actor, surgeAmount, tableLabel, trackKey) =>
       ResourceApp.executeGainGrowthSurge(actor, surgeAmount, tableLabel, trackKey),
   };
@@ -128,22 +131,20 @@ Hooks.on("updateSetting", (setting) => {
 
 // ── Combat tracking: reset used entries on turn/round changes ────────────────
 
-Hooks.on("updateCombat", (_combat, changes) => {
+Hooks.on("updateCombat", async (_combat, changes) => {
   if (!_systemValid) return;
-  if (!ResourceApp._instance?.rendered) return;
   if (!game.settings.get(MODULE_ID, "combatTracking")) return;
 
   if (changes.round !== undefined) {
     // New round: reset turn-scoped and round-scoped, but keep encounter-scoped
-    ResourceApp._instance.resetUsedEntries("round");
+    await ResourceApp.resetUsedEntries("round");
   } else if (changes.turn !== undefined) {
     // New turn within same round: reset only turn-scoped entries
-    ResourceApp._instance.resetUsedEntries("turn");
+    await ResourceApp.resetUsedEntries("turn");
   }
 });
 
-Hooks.on("deleteCombat", () => {
+Hooks.on("deleteCombat", async () => {
   if (!_systemValid) return;
-  if (!ResourceApp._instance?.rendered) return;
-  ResourceApp._instance.resetUsedEntries("all");
+  await ResourceApp.resetUsedEntries("all");
 });
